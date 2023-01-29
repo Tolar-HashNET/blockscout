@@ -9,6 +9,8 @@ defmodule Explorer.EthRPC do
   alias Explorer.Chain.Cache.BlockNumber
   alias Explorer.Etherscan.{Blocks, Logs, RPC}
 
+  alias Explorer.EthRPC.TolarHashnet
+
   @methods %{
     "eth_blockNumber" => %{
       action: :eth_block_number,
@@ -82,6 +84,36 @@ defmodule Explorer.EthRPC do
           "data":"0x0000000000000000000000000000000000000000000000000000000000000000",
           "topics": ["0x59ebeb90bc63057b6515673c3ecf9438e5058bca0f92585014eced636878c9a5"]
           }]
+      }
+      """
+    },
+    "tol_getBlockByHash" => %{
+      action: :tol_get_block_by_hash,
+      example: """
+      {
+        "id":1
+        "jsonrpc":"2.0"
+        "method":"tol_getBlockByHash"
+        "params":{
+        "block_hash":"998666a2af4e03f941799a778550d217eb021a0e3daf35eedec5cc2a477a6b3b"
+        }
+      }
+      """,
+      result: """
+      {
+        "id":1
+        "jsonrpc": "2.0"
+        "result": {
+          "block_index":8
+          "block_hash":"998666a2af4e03f941799a778..."
+          "confirmation_timestamp":1652192733280
+          "previous_block_hash":"93811a9bdbb846eedfc8f698b..."
+          "transaction_hashes":[
+            "5ab70e032db7303b1de311476..."
+            "1c053382aedf362907ea42a69..."
+            "fc6c8864f19c47505b8f49702..."
+          ]
+        }
       }
       """
     }
@@ -449,4 +481,9 @@ defmodule Explorer.EthRPC do
   end
 
   def methods, do: @methods
+
+  ###### Tolar Hashnet methods ######
+  def tol_get_block_by_hash({"block_hash", block_hash}) do
+    TolarHashnet.tol_get_block_by_hash(block_hash)
+  end
 end
