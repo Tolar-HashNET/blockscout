@@ -2105,6 +2105,13 @@ defmodule Explorer.Chain do
     Repo.get(Block, block_hash)
   end
 
+  def fetch_block_by_hash(block_hash, preloads) when is_list(preloads) do
+    Block
+    |> where([block], block.hash == ^block_hash)
+    |> preload(^preloads)
+    |> Repo.one()
+  end
+
   @doc """
   The number of `t:Explorer.Chain.InternalTransaction.t/0`.
 
