@@ -2112,6 +2112,13 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  def fetch_block_by_index(number, preloads) when is_list(preloads) do
+    Block
+    |> where([block], block.number == ^number)
+    |> preload(^preloads)
+    |> Repo.one()
+  end
+
   @doc """
   The number of `t:Explorer.Chain.InternalTransaction.t/0`.
 
