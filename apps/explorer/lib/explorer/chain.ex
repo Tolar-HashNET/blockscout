@@ -2313,6 +2313,13 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  def fetch_block_by_index(number, preloads) when is_list(preloads) do
+    Block
+    |> where([block], block.number == ^number)
+    |> preload(^preloads)
+    |> Repo.one()
+  end
+
   def filter_consensus_block_numbers(block_numbers) do
     query =
       from(
