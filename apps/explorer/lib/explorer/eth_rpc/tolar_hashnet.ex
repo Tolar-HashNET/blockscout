@@ -37,6 +37,9 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end
   end
 
+  @spec tol_get_block_count() :: {:ok, integer()}
+  def tol_get_block_count(), do: {:ok, Chain.block_count()}
+
   defp build_block_response(block) do
     transaction_hashes = Enum.map(block.transactions, & &1.hash)
 
