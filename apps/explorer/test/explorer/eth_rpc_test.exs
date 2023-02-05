@@ -1,7 +1,7 @@
 defmodule Explorer.EthRPCTest do
   use Explorer.DataCase
 
-  import Explorer.Factory, only: [transaction_hash: 0, block_hash: 0, with_block: 2, insert: 2]
+  import Explorer.Factory, only: [transaction_hash: 0, block_hash: 0, with_block: 2, insert: 2, insert_list: 2]
 
   alias Explorer.EthRPC
 
@@ -10,7 +10,7 @@ defmodule Explorer.EthRPCTest do
 
   @json_rpc_2_request %{"jsonrpc" => "2.0", "id" => 1}
 
-  describe "tol_getBlockByHash" do
+  describe "tol_getBlockCount" do
     setup do
       perv_block_hash = block_hash()
       previous_block = insert(:block, hash: perv_block_hash, number: 99)
@@ -131,7 +131,32 @@ defmodule Explorer.EthRPCTest do
     end
   end
 
-  defp build_request(method, params) do
+  describe "tol_getBlockCount/0" do
+    test "with 5 blocks in database - return 5 as a result" do
+      insert_list(5, :block)
+      request = build_request("tol_getBlockCount")
+
+      assert [
+               %{
+                 id: 1,
+                 result: 5
+               }
+             ] = EthRPC.responses([request])
+    end
+
+    test "with no blocks - return 0 as a result" do
+      request = build_request("tol_getBlockCount")
+
+      assert [
+               %{
+                 id: 1,
+                 result: 0
+               }
+             ] = EthRPC.responses([request])
+    end
+  end
+
+  defp build_request(method, params \\ []) do
     Map.merge(@json_rpc_2_request, %{
       "method" => method,
       "params" => params

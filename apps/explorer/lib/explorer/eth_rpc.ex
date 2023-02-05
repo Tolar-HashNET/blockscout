@@ -89,7 +89,8 @@ defmodule Explorer.EthRPC do
     },
     "tol_getBlockByHash" => %{
       action: :tol_get_block_by_hash,
-      notes: "Returns block along with it's transactions. This method to be used by mobile clients of Tolar Hashnet exclusively",
+      notes:
+        "Returns block along with it's transactions. This method to be used by mobile clients of Tolar Hashnet exclusively",
       example: """
       {
         "id":1,
@@ -119,11 +120,12 @@ defmodule Explorer.EthRPC do
       """,
       params: [
         %{name: "Block hash", description: "Block hash", type: "string", default: nil, required: true}
-      ],
+      ]
     },
     "tol_getBlockByIndex" => %{
       action: :tol_get_block_by_index,
-      notes: "Returns block along with it's transactions by block index (called number in blockscout). This method to be used by mobile clients of Tolar Hashnet exclusively",
+      notes:
+        "Returns block along with it's transactions by block index (called number in blockscout). This method to be used by mobile clients of Tolar Hashnet exclusively",
       example: """
       {
         "id": 1,
@@ -153,7 +155,27 @@ defmodule Explorer.EthRPC do
       """,
       params: [
         %{name: "Block index", description: "Block index as integer", type: "integer", default: nil, required: true}
-      ],
+      ]
+    },
+    "tol_getBlockCount" => %{
+      action: :tol_get_block_count,
+      notes:
+        "Returns count of blocks in the database. This method to be used by mobile clients of Tolar Hashnet exclusively",
+      params: [],
+      example: """
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "tol_getBlockCount"
+      }
+      """,
+      result: """
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": 42
+      }
+      """
     }
   }
 
@@ -527,5 +549,9 @@ defmodule Explorer.EthRPC do
 
   def tol_get_block_by_index({"block_index", block_index}) do
     TolarHashnet.tol_get_block_by_index(block_index)
+  end
+
+  def tol_get_block_count() do
+    TolarHashnet.tol_get_block_count()
   end
 end
