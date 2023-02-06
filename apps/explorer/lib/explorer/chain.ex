@@ -2320,6 +2320,14 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  def fetch_latest_block() do
+    Block
+    |> preload([:transactions])
+    |> order_by([block], desc: block.number)
+    |> limit(1)
+    |> Repo.one()
+  end
+
   def filter_consensus_block_numbers(block_numbers) do
     query =
       from(

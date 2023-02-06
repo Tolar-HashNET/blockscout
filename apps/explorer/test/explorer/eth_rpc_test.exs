@@ -131,6 +131,54 @@ defmodule Explorer.EthRPCTest do
     end
   end
 
+  describe "tol_getLatestBlock/0" do
+    setup do
+      perv_block_hash = block_hash()
+      previous_block = insert(:block, hash: perv_block_hash, number: 99)
+      block_hash = block_hash()
+      block = insert(:block, hash: block_hash, parent_hash: perv_block_hash, number: 100)
+
+      _other_block = insert(:block, number: 89)
+
+      transaction_1 = insert(:transaction, hash: transaction_hash()) |> with_block(block)
+      transaction_2 = insert(:transaction, hash: transaction_hash()) |> with_block(block)
+
+      hash_binary_representation = hash_to_binary(block_hash)
+
+      %{
+        prev_block: previous_block,
+        block: block,
+        transactions: [transaction_1, transaction_2],
+        hash_binary: hash_binary_representation
+      }
+    end
+
+    test "with valid params returns valid structure", %{
+      block: %Block{hash: block_hash, number: block_index} = block,
+      prev_block: %Block{hash: prev_block_hash},
+      transactions: transactions,
+      hash_binary: hash_binary_representation
+    } do
+      request = build_request("tol_getLatestBlock")
+
+      transaction_hashes = Enum.map(transactions, & &1.hash)
+      confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+
+      assert [
+               %{
+                 id: 1,
+                 result: %{
+                   block_index: ^block_index,
+                   block_hash: ^block_hash,
+                   confirmation_timestamp: ^confirmation_timestamp,
+                   previous_block_hash: ^prev_block_hash,
+                   transaction_hashes: ^transaction_hashes
+                 }
+               }
+             ] = EthRPC.responses([request])
+    end
+  end
+
   describe "tol_getBlockCount/0" do
     test "with 5 blocks in database - return 5 as a result" do
       insert_list(5, :block)
