@@ -37,6 +37,17 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end
   end
 
+  @spec tol_get_latest_block() :: {:ok, tol_block_response()} | {:error, error()}
+  def tol_get_latest_block() do
+    case Chain.fetch_latest_block() do
+      %Block{} = block ->
+        {:ok, build_block_response(block)}
+
+      _ ->
+        {:error, "Block not found"}
+    end
+  end
+
   @spec tol_get_block_count() :: {:ok, integer()}
   def tol_get_block_count(), do: {:ok, Chain.block_count()}
 

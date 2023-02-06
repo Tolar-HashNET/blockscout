@@ -2119,6 +2119,14 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  def fetch_latest_block() do
+    Block
+    |> preload([:transactions])
+    |> order_by([block], desc: block.number)
+    |> limit(1)
+    |> Repo.one()
+  end
+
   @doc """
   The number of `t:Explorer.Chain.InternalTransaction.t/0`.
 

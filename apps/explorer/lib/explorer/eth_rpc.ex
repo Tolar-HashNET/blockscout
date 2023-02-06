@@ -157,6 +157,39 @@ defmodule Explorer.EthRPC do
         %{name: "Block index", description: "Block index as integer", type: "integer", default: nil, required: true}
       ]
     },
+    "tol_getLatestBlock" => %{
+      action: :tol_get_latest_block,
+      params: [],
+      notes:
+        "Returns block with the highest number (index). This method to be used by mobile clients of Tolar Hashnet exclusively",
+      example: """
+      {
+        "id":1,
+        "jsonrpc":"2.0",
+        "method":"tol_getLatestBlock",
+        "params":{
+          "block_hash":"998666a2af4e03f941799a778550d217eb021a0e3daf35eedec5cc2a477a6b3b"
+        }
+      }
+      """,
+      result: """
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "block_index": 8,
+          "block_hash": "998666a2af4e03f941799a778550d217eb021a0e3daf35eedec5cc2a477a6b3b",
+          "confirmation_timestamp": 1652192733280,
+          "previous_block_hash": "93811a9bdbb846eedfc8f698b141c4de499cfb3d5359a6a1f312c59b21e121c4",
+          "transaction_hashes": [
+            "5ab70e032db7303b1de31147602970098c21c75904e7281e89cde960d5ede1d1",
+            "1c053382aedf362907ea42a6953c8d3684ec9abcb8769439222a4cd3219b678f",
+            "fc6c8864f19c47505b8f49702cf051953e06a07096860faa82718ae95ce69b55"
+          ]
+        }
+      }
+      """
+    },
     "tol_getBlockCount" => %{
       action: :tol_get_block_count,
       notes:
@@ -549,6 +582,10 @@ defmodule Explorer.EthRPC do
 
   def tol_get_block_by_index({"block_index", block_index}) do
     TolarHashnet.tol_get_block_by_index(block_index)
+  end
+
+  def tol_get_latest_block() do
+    TolarHashnet.tol_get_latest_block()
   end
 
   def tol_get_block_count() do
