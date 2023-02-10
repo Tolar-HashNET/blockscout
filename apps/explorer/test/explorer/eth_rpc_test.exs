@@ -204,6 +204,75 @@ defmodule Explorer.EthRPCTest do
     end
   end
 
+  describe "tol_get_transaction/1" do
+    setup do
+      block_hash = block_hash()
+      block = insert(:block, hash: block_hash)
+      transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block)
+
+      %{block: block, transaction: transaction}
+    end
+
+    test "with existing transaction - return info correctly", %{
+      transaction: transaction,
+      block: %Block{hash: block_hash} = block
+    } do
+      transaction_hash_binary_representation = hash_to_binary(transaction.hash)
+      request = build_request("tol_getTransaction", [{"transaction_hash", transaction_hash_binary_representation}])
+
+      %Transaction{
+        hash: hash,
+        index: index,
+        value: value,
+        gas: gas,
+        gas_price: gas_price,
+        nonce: nonce,
+        input: data,
+        gas_used: gas_used,
+        error: exception,
+        has_error_in_internal_txs: excepted,
+        created_contract_address_hash: new_address,
+        from_address: from,
+        to_address: to
+      } = transaction
+
+      confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+
+      assert [
+               %{
+                 id: 1,
+                 result: %{
+                   transaction_hash: ^hash,
+                   transaction_index: ^index,
+                   value: ^value,
+                   block_hash: ^block_hash,
+                   gas: ^gas,
+                   gas_price: ^gas_price,
+                   nonce: ^nonce,
+                   data: ^data,
+                   gas_used: ^gas_used,
+                   exception: ^exception,
+                   excepted: ^excepted,
+                   sender_address: from,
+                   receiver_address: to,
+                   new_address: ^new_address,
+                   confirmation_timestamp: ^confirmation_timestamp,
+                   network_id: nil,
+                   output: nil,
+                   gas_refunded: nil
+                 }
+               }
+             ] = EthRPC.responses([request])
+    end
+
+    test "with not existing transaction - return a propper error message" do
+      tx_hash = transaction_hash() |> hash_to_binary()
+      request = build_request("tol_getTransaction", [{"transaction_hash", tx_hash}])
+
+      assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
+    end
+  end
+
   defp build_request(method, params \\ []) do
     Map.merge(@json_rpc_2_request, %{
       "method" => method,
