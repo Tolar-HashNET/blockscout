@@ -209,6 +209,50 @@ defmodule Explorer.EthRPC do
         "result": 42
       }
       """
+    },
+    "tol_getTransaction" => %{
+      action: :tol_get_transaction,
+      params: [
+        %{name: "Transaction Hash", description: "Transaction Hash", type: "string", default: nil, required: true}
+      ],
+      notes:
+        "Returns full info about transaction. This method to be used by mobile clients of Tolar Hashnet exclusively",
+      example: """
+      {
+        "id":1,
+        "jsonrpc": "2.0",
+        "method": "tol_getTransaction",
+        "params": {
+          "transaction_hash": "5ab70e032db7303b1de31147602970098c21c75904e7281e89cde960d5ede1d1"
+        }
+      }
+      """,
+      result: """
+      {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "transaction_hash": "5ab70e032db7303b1de31147602970098c21c75904e7281e89cde960d5ede1d1",
+          "block_hash": "998666a2af4e03f941799a778550d217eb021a0e3daf35eedec5cc2a477a6b3b",
+          "transaction_index": 1,
+          "sender_address": "54d18f8626785dca76b720e5e4426e7d7629fb0c06ab09e65b",
+          "receiver_address": "54721c8efe8e860a5b7e5513a13bba982bd000b076239b705d",
+          "value": "569000",
+          "gas": "21000",
+          "gas_price": "1",
+          "data": "",
+          "nonce": "7",
+          "network_id": 1,
+          "confirmation_timestamp": 1652192733280,
+          "gas_used": "21000",
+          "gas_refunded": "0",
+          "new_address": "",
+          "output": "",
+          "excepted": false,
+          "exception": 0
+        }
+      }
+      """
     }
   }
 
@@ -590,5 +634,9 @@ defmodule Explorer.EthRPC do
 
   def tol_get_block_count() do
     TolarHashnet.tol_get_block_count()
+  end
+
+  def tol_get_transaction({"transaction_hash", tx_hash}) do
+    TolarHashnet.tol_get_transaction(tx_hash)
   end
 end

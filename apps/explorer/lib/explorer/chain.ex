@@ -2328,6 +2328,13 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  def fetch_transaction_by_hash(transaction_hash) do
+    Transaction
+    |> where([t], t.hash == ^transaction_hash)
+    |> preload([:block])
+    |> Repo.one()
+  end
+
   def filter_consensus_block_numbers(block_numbers) do
     query =
       from(
