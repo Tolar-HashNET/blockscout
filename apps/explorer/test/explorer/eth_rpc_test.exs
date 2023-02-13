@@ -254,6 +254,7 @@ defmodule Explorer.EthRPCTest do
                  result: %{
                    sender_address: resp_from,
                    receiver_address: resp_to,
+                   new_address: "54000000000000000000000000000000000000000023199e2b",
                    transaction_hash: ^hash,
                    transaction_index: ^index,
                    value: ^value,
@@ -265,7 +266,6 @@ defmodule Explorer.EthRPCTest do
                    gas_used: ^gas_used,
                    exception: ^exception,
                    excepted: ^excepted,
-                   new_address: ^new_address,
                    confirmation_timestamp: ^confirmation_timestamp,
                    network_id: nil,
                    output: nil,
