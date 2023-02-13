@@ -5,6 +5,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
   alias Explorer.Chain
   alias Explorer.Chain.{Address, Block, Data, Hash, Transaction, Wei, Gas}
 
+  @type tolar_formatted_address_hash :: String.t()
+
   @type tol_block_response :: %{
           required(:block_hash) => Hash.t(),
           required(:previous_block_hash) => Hash.t(),
@@ -83,6 +85,21 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end
   end
 
+  @tolar_address_prefix "54"
+
+  @spec eth_address_to_tolar(Hash.Address.t()) :: tolar_formatted_address_hash()
+  def eth_address_to_tolar(%Hash{} = hash) do
+    address = hash |> to_string() |> String.trim_leading("0x")
+
+    <<_b::binary-size(56), checksum::binary>> =
+      hash.bytes
+      |> ExKeccak.hash_256()
+      |> ExKeccak.hash_256()
+      |> Base.encode16(case: :lower)
+
+    @tolar_address_prefix <> address <> checksum
+  end
+
   defp build_block_response(block) do
     transaction_hashes = Enum.map(block.transactions, & &1.hash)
 
@@ -100,8 +117,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
       transaction_hash: transaction.hash,
       block_hash: transaction.block_hash,
       transaction_index: transaction.index,
-      sender_address: transaction.from_address,
-      receiver_address: transaction.to_address,
+      sender_address: eth_address_to_tolar(transaction.from_address.hash),
+      receiver_address: eth_address_to_tolar(transaction.to_address.hash),
       value: transaction.value,
       gas: transaction.gas,
       gas_price: transaction.gas_price,
@@ -110,11 +127,14 @@ defmodule Explorer.EthRPC.TolarHashnet do
       gas_used: transaction.gas_used,
       exception: transaction.error,
       excepted: transaction.has_error_in_internal_txs,
-      new_address: transaction.created_contract_address_hash,
+      new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       confirmation_timestamp: DateTime.to_unix(transaction.block.timestamp, :millisecond),
       network_id: nil,
       output: nil,
       gas_refunded: nil
     }
   end
+
+  defp maybe_convert_to_tolar_hash(nil), do: nil
+  defp maybe_convert_to_tolar_hash(%Hash{} = hash), do: eth_address_to_tolar(hash)
 end
