@@ -10,6 +10,16 @@ defmodule Explorer.EthRPCTest do
 
   @json_rpc_2_request %{"jsonrpc" => "2.0", "id" => 1}
 
+  describe "eth_address_to_tolar/1" do
+    test "converts eth_address to tolar format correctly" do
+      tx_example_hash = "0000000000000000000000000000000000000000"
+      {:ok, hash} = Explorer.Chain.Hash.Address.cast("0x" <> tx_example_hash)
+
+      assert Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(hash) ===
+               "54000000000000000000000000000000000000000023199e2b"
+    end
+  end
+
   describe "tol_getBlockCount" do
     setup do
       perv_block_hash = block_hash()
@@ -242,6 +252,8 @@ defmodule Explorer.EthRPCTest do
                %{
                  id: 1,
                  result: %{
+                   sender_address: resp_from,
+                   receiver_address: resp_to,
                    transaction_hash: ^hash,
                    transaction_index: ^index,
                    value: ^value,
@@ -253,8 +265,6 @@ defmodule Explorer.EthRPCTest do
                    gas_used: ^gas_used,
                    exception: ^exception,
                    excepted: ^excepted,
-                   sender_address: from,
-                   receiver_address: to,
                    new_address: ^new_address,
                    confirmation_timestamp: ^confirmation_timestamp,
                    network_id: nil,
@@ -263,6 +273,9 @@ defmodule Explorer.EthRPCTest do
                  }
                }
              ] = EthRPC.responses([request])
+
+      refute from == resp_from
+      refute to == resp_to
     end
 
     test "with not existing transaction - return a propper error message" do
