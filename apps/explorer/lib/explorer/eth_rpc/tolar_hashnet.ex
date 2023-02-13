@@ -30,10 +30,10 @@ defmodule Explorer.EthRPC.TolarHashnet do
           required(:confirmation_timestamp) => non_neg_integer(),
           required(:excepted) => boolean(),
           required(:exception) => String.t() | nil,
+          required(:new_address) => String.t(),
           network_id: nil,
           output: nil,
           gas_refunded: nil,
-          new_address: nil
         }
 
   @type error :: String.t()
@@ -135,6 +135,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
     }
   end
 
-  defp maybe_convert_to_tolar_hash(nil), do: nil
+  @zero_address "54000000000000000000000000000000000000000023199e2b"
+
+  defp maybe_convert_to_tolar_hash(nil), do: @zero_address
   defp maybe_convert_to_tolar_hash(%Hash{} = hash), do: eth_address_to_tolar(hash)
 end
