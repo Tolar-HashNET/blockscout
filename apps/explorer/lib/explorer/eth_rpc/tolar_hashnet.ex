@@ -33,7 +33,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
           required(:new_address) => String.t(),
           network_id: nil,
           output: nil,
-          gas_refunded: nil,
+          gas_refunded: nil
         }
 
   @type error :: String.t()
@@ -85,6 +85,28 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end
   end
 
+  @transaction_associations %{
+    from_address: :required,
+    to_address: :required,
+    block: :required
+  }
+
+  @spec tol_get_transaction_list([String.t()], integer(), integer()) :: {:ok, list()} | {:error, error()}
+  def tol_get_transaction_list(addresses, limit, skip) do
+    with eth_addresses <- toalr_addresses_to_eth(addresses),
+         [%Transaction{} | _] = transactions <-
+           Chain.fetch_transactions_for_addresses(eth_addresses,
+             limit: limit,
+             skip: skip,
+             necessity_by_association: @transaction_associations
+           ) do
+      {:ok, Enum.map(transactions, &build_transaction_response/1)}
+    else
+      [] ->
+        {:error, "Transactions not found"}
+    end
+  end
+
   @tolar_address_prefix "54"
 
   @spec eth_address_to_tolar(Hash.Address.t()) :: tolar_formatted_address_hash()
@@ -98,6 +120,31 @@ defmodule Explorer.EthRPC.TolarHashnet do
       |> Base.encode16(case: :lower)
 
     @tolar_address_prefix <> address <> checksum
+  end
+
+  @spec tolar_address_to_eth(tolar_formatted_address_hash()) :: {:ok, Hash.Address.t()} | {:error, :invalid_format}
+  def tolar_address_to_eth("54" <> <<address::binary-size(40), _checksum::binary>>) do
+    case Chain.string_to_address_hash("0x" <> address) do
+      :error ->
+        {:error, :invalid_format}
+
+      {:ok, _} = success ->
+        success
+    end
+  end
+
+  def tolar_address_to_eth(_), do: {:error, :invalid_format}
+
+  def toalr_addresses_to_eth(addresses) when is_list(addresses) do
+    Enum.reduce(addresses, [], fn address, acc ->
+      case tolar_address_to_eth(address) do
+        {:ok, hash} ->
+          [hash | acc]
+
+        _ ->
+          acc
+      end
+    end)
   end
 
   defp build_block_response(block) do

@@ -19,7 +19,8 @@ defmodule Explorer.Chain do
       union: 2,
       update: 2,
       where: 2,
-      where: 3
+      where: 3,
+      or_where: 3
     ]
 
   import EthereumJSONRPC, only: [integer_to_quantity: 1, fetch_block_internal_transactions: 2]
@@ -2020,11 +2021,41 @@ defmodule Explorer.Chain do
   @spec hashes_to_transactions([Hash.Full.t()], [necessity_by_association_option]) :: [Transaction.t()] | []
   def hashes_to_transactions(hashes, options \\ []) when is_list(hashes) and is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
+    # limit = Keyword.get(options, :limit)
+    # offset = Keyword.get(options, :skip)
 
     fetch_transactions()
     |> where([transaction], transaction.hash in ^hashes)
     |> join_associations(necessity_by_association)
     |> preload([{:token_transfers, [:token, :from_address, :to_address]}])
+    |> Repo.all()
+  end
+
+  def fetch_transactions_for_addresses(addresses, options \\ [])
+
+  def fetch_transactions_for_addresses([], options) when is_list(options) do
+    necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
+    limit = Keyword.get(options, :limit, 1000)
+    offset = Keyword.get(options, :skip, 0)
+
+    fetch_transactions()
+    |> join_associations(necessity_by_association)
+    |> limit(^limit)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  def fetch_transactions_for_addresses(addresses, options) when is_list(addresses) and is_list(options) do
+    necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
+    limit = Keyword.get(options, :limit, 1000)
+    offset = Keyword.get(options, :skip, 0)
+
+    fetch_transactions()
+    |> where([transaction], transaction.from_address_hash in ^addresses)
+    |> or_where([transaction], transaction.to_address_hash in ^addresses)
+    |> join_associations(necessity_by_association)
+    |> limit(^limit)
+    |> offset(^offset)
     |> Repo.all()
   end
 

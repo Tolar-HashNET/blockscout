@@ -253,6 +253,74 @@ defmodule Explorer.EthRPC do
         }
       }
       """
+    },
+    "tol_getTransactionList" => %{
+      action: :tol_get_transaction_list,
+      params: [
+        %{
+          name: "addresses",
+          description: "List of addresses in tolar format",
+          type: "json",
+          default: nil,
+          required: true
+        },
+        %{
+          name: "skip",
+          description: "Number of most recent transactions to skip starting from blockchain’s last confirmed block.",
+          type: "number",
+          default: 0,
+          required: true
+        },
+        %{
+          name: "limit",
+          description: "Maximum number of transactions to return in one batch (no more than 1000).",
+          type: "number",
+          default: 10,
+          required: true
+        }
+      ],
+      notes: "Retrieves most recent transaction list based on transaction limit and how many transactions to skip.",
+      example: """
+      {
+        "jsonrpc": "2.0",
+        "id": "requestExample",
+        "method": "tol_getTransactionList",
+        "params": {
+          "addresses": [
+            "5493b8597964a2a7f0c93c49f9e4c4a170e0c42a5eb3beda0d"
+          ],
+          "skip": 0,
+          "limit": 10
+        }
+      }
+      """,
+      result: """
+      {
+        "jsonrpc": "2.0",
+        "id": "requestExample",
+        "result": {
+          "transactions": [
+            {
+              "block_hash": "99e2922dad39527bd730d9e070658b9a302e276d06920e774101287d241b68ef",
+              "transaction_index": 0,
+              "sender_address": "5493b8597964a2a7f0c93c49f9e4c4a170e0c42a5eb3beda0d",
+              "receiver_address": "54f51fb1836ad0dcaee07f2c750376d11fb21474f5587ea83c",
+              "value": 0,
+              "gas": 6000000,
+              "gas_price": 1,
+              "data": "0xcfae3217",
+              "nonce": 0,
+              "gas_used": 22230,
+              "gas_refunded": 0,
+              "new_address": "54000000000000000000000000000000000000000023199e2b",
+              "output": "0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000c48656c6c6f20576f726c64210000000000000000000000000000000000000000",
+              "excepted": false,
+              "confirmation_timestamp": 1591888980040
+            }
+          ]
+        }
+      }
+      """
     }
   }
 
@@ -638,5 +706,9 @@ defmodule Explorer.EthRPC do
 
   def tol_get_transaction({"transaction_hash", tx_hash}) do
     TolarHashnet.tol_get_transaction(tx_hash)
+  end
+
+  def tol_get_transaction_list({"addresses", addresses}, {"limit", limit} \\ 10, {"skip", skip} \\ 0) do
+    TolarHashnet.tol_get_transaction_list(addresses, limit, skip)
   end
 end
