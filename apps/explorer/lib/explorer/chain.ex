@@ -180,7 +180,11 @@ defmodule Explorer.Chain do
   @typep paging_options :: {:paging_options, PagingOptions.t()}
   @typep balance_by_day :: %{date: String.t(), value: Wei.t()}
   @typep api? :: {:api?, true | false}
-  @typep tol_fetch_transactions_options :: [{:limit, non_neg_integer()}, {:skip, non_neg_integer()}, {:necessity_by_association, necessity_by_association}]
+  @typep tol_fetch_transactions_options :: [
+           {:limit, non_neg_integer()},
+           {:skip, non_neg_integer()},
+           {:necessity_by_association, necessity_by_association}
+         ]
 
   @doc """
   Gets from the cache the count of `t:Explorer.Chain.Address.t/0`'s where the `fetched_coin_balance` is > 0
@@ -2363,10 +2367,10 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
-  def fetch_transaction_by_hash(transaction_hash) do
+  def fetch_transaction_by_hash(transaction_hash, preloads \\ [:block, :from_address, :to_address]) do
     Transaction
     |> where([t], t.hash == ^transaction_hash)
-    |> preload([:block, :from_address, :to_address])
+    |> preload(^preloads)
     |> Repo.one()
   end
 

@@ -321,6 +321,41 @@ defmodule Explorer.EthRPC do
         }
       }
       """
+    },
+    "tol_getTransactionReceipt" => %{
+      action: :tol_get_transaction_receipt,
+      params: [
+        %{name: "Transaction Hash", description: "Transaction Hash", type: "string", default: nil, required: true}
+      ],
+      notes: "Retrieves transaction receipt information from the local database.",
+      example: """
+      {
+        "id": "1",
+        "jsonrpc": "2.0",
+        "method": "tol_getTransactionReceipt",
+        "params": {
+          "transaction_hash": "298bc4c77dff14895bf9529b7deec77ff9da1e8ac3fbeb6f3f10dd7217210aac"
+        }
+      }
+      """,
+      result: """
+      {
+        "jsonrpc": "2.0",
+        "id": "1",
+        "result": {
+          "block_hash": "aa05c45722bc0711cdd1110578c253ecb02a18ea42ec7e2e2ccb4182099cedbb",
+          "transaction_index": 0,
+          "sender_address": "5484c512b1cf3d45e7506a772b7358375acc571b2930d27deb",
+          "receiver_address": "5422de393d7a0d716cdf1f9ea12d85f6c880b4570b17e1a7f9",
+          "gas_used": 22230,
+          "new_address": "54000000000000000000000000000000000000000023199e2b",
+          "excepted": false,
+          "block_number": 19457,
+          "hash": "298bc4c77dff14895bf9529b7deec77ff9da1e8ac3fbeb6f3f10dd7217210aac",
+          "logs": []
+        }
+      }
+      """
     }
   }
 
@@ -706,6 +741,10 @@ defmodule Explorer.EthRPC do
 
   def tol_get_transaction({"transaction_hash", tx_hash}) do
     TolarHashnet.tol_get_transaction(tx_hash)
+  end
+
+  def tol_get_transaction_receipt({"transaction_hash", tx_hash}) do
+    TolarHashnet.tol_get_transaction_receipt(tx_hash)
   end
 
   def tol_get_transaction_list({"addresses", addresses}, {"limit", limit}, {"skip", skip}) do
