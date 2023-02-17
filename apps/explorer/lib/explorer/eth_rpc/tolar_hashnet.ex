@@ -91,7 +91,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
     block: :required
   }
 
-  @spec tol_get_transaction_list([String.t()], integer(), integer()) :: {:ok, list()} | {:error, error()}
+  @spec tol_get_transaction_list([String.t()], non_neg_integer(), non_neg_integer()) :: {:ok, [transaction_response()]} | {:error, error()}
   def tol_get_transaction_list(addresses, limit, skip) do
     with eth_addresses <- toalr_addresses_to_eth(addresses),
          [%Transaction{} | _] = transactions <-
@@ -102,7 +102,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
            ) do
       {:ok, Enum.map(transactions, &build_transaction_response/1)}
     else
-      [] ->
+      _ ->
         {:error, "Transactions not found"}
     end
   end

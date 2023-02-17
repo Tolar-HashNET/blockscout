@@ -708,7 +708,7 @@ defmodule Explorer.EthRPC do
     TolarHashnet.tol_get_transaction(tx_hash)
   end
 
-  def tol_get_transaction_list({"addresses", addresses}, {"limit", limit} \\ 10, {"skip", skip} \\ 0) do
+  def tol_get_transaction_list({"addresses", addresses}, {"limit", limit}, {"skip", skip}) do
     TolarHashnet.tol_get_transaction_list(addresses, limit, skip)
   end
 end
