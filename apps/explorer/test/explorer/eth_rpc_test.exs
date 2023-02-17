@@ -439,6 +439,106 @@ defmodule Explorer.EthRPCTest do
     end
   end
 
+  describe "tol_getTransactionReceipt/1" do
+    setup do
+      block_hash = block_hash()
+      block = insert(:block, hash: block_hash)
+      transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block)
+
+      {:ok, from_address_hash} = Explorer.Chain.Hash.Address.cast("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5")
+      {:ok, to_address_hash} = Explorer.Chain.Hash.Address.cast("0x8880bb98e7747f73b52a9cfA34DAb9A4A06afA38")
+      from_address = insert(:address, hash: from_address_hash)
+      to_address = insert(:address, hash: to_address_hash)
+
+      transaction =
+        insert(:transaction,
+          hash: transaction_hash(),
+          from_address: from_address,
+          to_address: to_address
+        )
+        |> with_block(block)
+
+      log_1 =
+        insert(:log,
+          block: block,
+          transaction: transaction,
+          data: "0x010101",
+          address: to_address,
+          first_topic: "0x00",
+          second_topic: "0x01"
+        )
+
+      log_2 = insert(:log, block: block, transaction: transaction, data: "0x010102", address: to_address)
+      log_3 = insert(:log, block: block, transaction: transaction, data: "0x010103", address: to_address)
+
+      %{block: block, transaction: transaction, logs: [log_1, log_2, log_3]}
+    end
+
+    test "returns an error when transaction isn't found in the database", %{transaction: transaction} do
+      tx_hash = transaction_hash() |> hash_to_binary()
+      request = build_request("tol_getTransactionReceipt", [{"transaction_hash", tx_hash}])
+
+      assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
+    end
+
+    test "return response with expected structure when transactions is found", %{
+      transaction: transaction,
+      block: %Block{number: block_num, hash: block_hash} = block,
+      logs: [first_log | _]
+    } do
+      transaction_hash_binary_representation = hash_to_binary(transaction.hash)
+
+      request =
+        build_request("tol_getTransactionReceipt", [{"transaction_hash", transaction_hash_binary_representation}])
+
+      %Transaction{
+        hash: tx_hash,
+        index: tx_index,
+        value: value,
+        gas: gas,
+        gas_price: gas_price,
+        nonce: nonce,
+        input: data,
+        gas_used: gas_used,
+        error: exception,
+        has_error_in_internal_txs: excepted,
+        created_contract_address_hash: new_address,
+        from_address: from,
+        to_address: to
+      } = transaction
+
+      assert [
+               %{
+                 id: 1,
+                 result: %{
+                   block_hash: ^block_hash,
+                   hash: ^tx_hash,
+                   transaction_index: ^tx_index,
+                   sender_address: sender_address,
+                   receiver_address: receiver_address,
+                   gas_used: ^gas_used,
+                   new_address: new_address,
+                   excepted: ^excepted,
+                   block_number: ^block_num,
+                   logs: [log | _]
+                 }
+               }
+             ] = EthRPC.responses([request])
+
+      assert_tol_address(sender_address)
+      assert_tol_address(receiver_address)
+      assert_tol_address(new_address)
+
+      assert_tol_address(log.address)
+      assert log.data == first_log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
+      assert log.topics == ["0x00", "0x01"]
+    end
+  end
+
+  defp assert_tol_address(term) when is_binary(term) do
+    assert String.starts_with?(term, "54")
+  end
+
   defp build_request(method, params \\ []) do
     Map.merge(@json_rpc_2_request, %{
       "method" => method,

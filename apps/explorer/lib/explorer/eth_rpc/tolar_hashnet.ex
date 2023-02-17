@@ -3,40 +3,59 @@ defmodule Explorer.EthRPC.TolarHashnet do
   JsonRPC methods handling for Tolar hashnet
   """
   alias Explorer.Chain
-  alias Explorer.Chain.{Address, Block, Data, Hash, Transaction, Wei, Gas}
+  alias Explorer.Chain.{Block, Data, Hash, Transaction, Wei, Gas}
 
-  @type tolar_formatted_address_hash :: String.t()
+  @typep tolar_formatted_address_hash :: String.t()
 
-  @type tol_block_response :: %{
-          required(:block_hash) => Hash.t(),
-          required(:previous_block_hash) => Hash.t(),
-          required(:block_index) => EthereumJSONRPC.block_number(),
-          required(:confirmation_timestamp) => non_neg_integer(),
-          required(:transaction_hashes) => [Hash.t()]
-        }
+  @typep tol_block_response :: %{
+           required(:block_hash) => Hash.t(),
+           required(:previous_block_hash) => Hash.t(),
+           required(:block_index) => EthereumJSONRPC.block_number(),
+           required(:confirmation_timestamp) => non_neg_integer(),
+           required(:transaction_hashes) => [Hash.t()]
+         }
 
-  @type transaction_response :: %{
-          required(:transaction_hash) => Hash.t(),
-          required(:block_hash) => Hash.t(),
-          required(:transaction_index) => Transaction.transaction_index(),
-          required(:sender_address) => Address.t(),
-          required(:receiver_address) => Address.t(),
-          required(:value) => Wei.t(),
-          required(:gas) => Gas.t(),
-          required(:gas_price) => Wei.t(),
-          required(:nonce) => non_neg_integer(),
-          required(:data) => Data.t(),
-          required(:gas_used) => Gas.t() | nil,
-          required(:confirmation_timestamp) => non_neg_integer(),
-          required(:excepted) => boolean(),
-          required(:exception) => String.t() | nil,
-          required(:new_address) => String.t(),
-          network_id: nil,
-          output: nil,
-          gas_refunded: nil
-        }
+  @typep transaction_response :: %{
+           required(:transaction_hash) => Hash.t(),
+           required(:block_hash) => Hash.t(),
+           required(:transaction_index) => Transaction.transaction_index(),
+           required(:sender_address) => tolar_formatted_address_hash,
+           required(:receiver_address) => tolar_formatted_address_hash,
+           required(:value) => Wei.t(),
+           required(:gas) => Gas.t(),
+           required(:gas_price) => Wei.t(),
+           required(:nonce) => non_neg_integer(),
+           required(:data) => Data.t(),
+           required(:gas_used) => Gas.t() | nil,
+           required(:confirmation_timestamp) => non_neg_integer(),
+           required(:excepted) => boolean(),
+           required(:exception) => String.t() | nil,
+           required(:new_address) => tolar_formatted_address_hash,
+           network_id: nil,
+           output: nil,
+           gas_refunded: nil
+         }
 
-  @type error :: String.t()
+  @typep transaction_receipt_response :: %{
+           required(:hash) => Hash.t(),
+           required(:block_hash) => Hash.t(),
+           required(:transaction_index) => Transaction.transaction_index(),
+           required(:sender_address) => tolar_formatted_address_hash(),
+           required(:receiver_address) => tolar_formatted_address_hash(),
+           required(:new_address) => tolar_formatted_address_hash(),
+           required(:gas_used) => Gas.t() | nil,
+           required(:excepted) => boolean(),
+           required(:block_number) => EthereumJSONRPC.block_number(),
+           required(:logs) => [log()]
+         }
+
+  @typep log :: %{
+           address: tolar_formatted_address_hash(),
+           topics: [String.t()],
+           data: String.t()
+         }
+
+  @typep error :: String.t()
 
   @spec tol_get_block_by_hash(String.t()) :: {:ok, tol_block_response()} | {:error, error()}
   def tol_get_block_by_hash(block_hash) when is_binary(block_hash) do
@@ -85,13 +104,25 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end
   end
 
+  @spec tol_get_transaction_receipt(String.t()) :: {:ok, transaction_receipt_response()} | {:error, error()}
+  def tol_get_transaction_receipt(transaction_hash) do
+    case Chain.fetch_transaction_by_hash(transaction_hash, [:block, :from_address, :to_address, :logs]) do
+      %Transaction{} = transaction ->
+        {:ok, build_transaction_receipt_response(transaction)}
+
+      _ ->
+        {:error, "Transaction not found"}
+    end
+  end
+
   @transaction_associations %{
     from_address: :required,
     to_address: :required,
     block: :required
   }
 
-  @spec tol_get_transaction_list([String.t()], non_neg_integer(), non_neg_integer()) :: {:ok, [transaction_response()]} | {:error, error()}
+  @spec tol_get_transaction_list([String.t()], non_neg_integer(), non_neg_integer()) ::
+          {:ok, [transaction_response()]} | {:error, error()}
   def tol_get_transaction_list(addresses, limit, skip) do
     with eth_addresses <- toalr_addresses_to_eth(addresses),
          [%Transaction{} | _] = transactions <-
@@ -180,6 +211,31 @@ defmodule Explorer.EthRPC.TolarHashnet do
       output: nil,
       gas_refunded: nil
     }
+  end
+
+  defp build_transaction_receipt_response(transaction) do
+    %{
+      hash: transaction.hash,
+      block_hash: transaction.block_hash,
+      block_number: transaction.block_number,
+      transaction_index: transaction.index,
+      sender_address: eth_address_to_tolar(transaction.from_address.hash),
+      receiver_address: eth_address_to_tolar(transaction.to_address.hash),
+      new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
+      gas_used: transaction.gas_used,
+      excepted: transaction.has_error_in_internal_txs,
+      logs: build_logs(transaction)
+    }
+  end
+
+  defp build_logs(transaction) do
+    Enum.map(transaction.logs, fn log ->
+      %{
+        address: eth_address_to_tolar(log.address_hash),
+        topics: Enum.reject([log.first_topic, log.second_topic, log.third_topic, log.fourth_topic], &is_nil/1),
+        data: log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
+      }
+    end)
   end
 
   @zero_address "54000000000000000000000000000000000000000023199e2b"
