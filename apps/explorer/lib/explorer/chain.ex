@@ -180,6 +180,7 @@ defmodule Explorer.Chain do
   @typep paging_options :: {:paging_options, PagingOptions.t()}
   @typep balance_by_day :: %{date: String.t(), value: Wei.t()}
   @typep api? :: {:api?, true | false}
+  @typep tol_fetch_transactions_options :: [{:limit, non_neg_integer()}, {:skip, non_neg_integer()}, {:necessity_by_association, necessity_by_association}]
 
   @doc """
   Gets from the cache the count of `t:Explorer.Chain.Address.t/0`'s where the `fetched_coin_balance` is > 0
@@ -2165,8 +2166,6 @@ defmodule Explorer.Chain do
   @spec hashes_to_transactions([Hash.Full.t()], [necessity_by_association_option]) :: [Transaction.t()] | []
   def hashes_to_transactions(hashes, options \\ []) when is_list(hashes) and is_list(options) do
     necessity_by_association = Keyword.get(options, :necessity_by_association, %{})
-    # limit = Keyword.get(options, :limit)
-    # offset = Keyword.get(options, :skip)
 
     fetch_transactions()
     |> where([transaction], transaction.hash in ^hashes)
@@ -2175,6 +2174,11 @@ defmodule Explorer.Chain do
     |> Repo.all()
   end
 
+  @doc """
+  Returns a list of transactions where from_address or to_address matches addresses passed in first argument.
+  If empty list is passed - returns a list of most recent transactions with respect to :limit and :skip options.
+  """
+  @spec fetch_transactions_for_addresses([String.t()], tol_fetch_transactions_options()) :: [Transaction.t()] | []
   def fetch_transactions_for_addresses(addresses, options \\ [])
 
   def fetch_transactions_for_addresses([], options) when is_list(options) do
