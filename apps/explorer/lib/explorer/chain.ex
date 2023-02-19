@@ -2166,6 +2166,14 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  def fetch_latest_block_hash() do
+    Block
+    |> select([block], block.hash)
+    |> order_by([block], desc: block.number)
+    |> limit(1)
+    |> Repo.one()
+  end
+
   def fetch_transaction_by_hash(transaction_hash, preloads \\ [:block, :from_address, :to_address]) do
     Transaction
     |> where([t], t.hash == ^transaction_hash)

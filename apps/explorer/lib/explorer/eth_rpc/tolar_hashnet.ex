@@ -3,7 +3,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
   JsonRPC methods handling for Tolar hashnet
   """
   alias Explorer.Chain
-  alias Explorer.Chain.{Block, Data, Hash, Transaction, Wei, Gas}
+  alias Explorer.Chain.Cache.Block, as: BlockCache
+  alias Explorer.Chain.{Address, Block, Data, Hash, Transaction, Wei, Gas}
 
   @typep tolar_formatted_address_hash :: String.t()
 
@@ -213,33 +214,14 @@ defmodule Explorer.EthRPC.TolarHashnet do
     }
   end
 
-  defp build_transaction_receipt_response(transaction) do
+  defp blockchain_info() do
     %{
-      hash: transaction.hash,
-      block_hash: transaction.block_hash,
-      block_number: transaction.block_number,
-      transaction_index: transaction.index,
-      sender_address: eth_address_to_tolar(transaction.from_address.hash),
-      receiver_address: eth_address_to_tolar(transaction.to_address.hash),
-      new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
-      gas_used: transaction.gas_used,
-      excepted: transaction.has_error_in_internal_txs,
-      logs: build_logs(transaction)
+      confirmed_blocks_count: BlockCache.estimated_count(),
+      total_blocks_count: Chain.block_count(),
+      last_confirmed_block_hash: Chain.fetch_latest_block_hash()
     }
   end
 
-  defp build_logs(transaction) do
-    Enum.map(transaction.logs, fn log ->
-      %{
-        address: eth_address_to_tolar(log.address_hash),
-        topics: Enum.reject([log.first_topic, log.second_topic, log.third_topic, log.fourth_topic], &is_nil/1),
-        data: log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
-      }
-    end)
-  end
-
-  @zero_address "54000000000000000000000000000000000000000023199e2b"
-
-  defp maybe_convert_to_tolar_hash(nil), do: @zero_address
+  defp maybe_convert_to_tolar_hash(nil), do: nil
   defp maybe_convert_to_tolar_hash(%Hash{} = hash), do: eth_address_to_tolar(hash)
 end
