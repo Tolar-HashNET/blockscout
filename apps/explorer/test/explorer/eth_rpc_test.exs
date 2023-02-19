@@ -66,7 +66,7 @@ defmodule Explorer.EthRPCTest do
       transactions: transactions,
       hash_binary: hash_binary_representation
     } do
-      request = build_request("tol_getBlockByHash", [{"block_hash", hash_binary_representation}])
+      request = build_request("tol_getBlockByHash", [%{"block_hash" => hash_binary_representation}])
 
       transaction_hashes = Enum.map(transactions, & &1.hash)
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
@@ -87,13 +87,13 @@ defmodule Explorer.EthRPCTest do
 
     test "with no data - return error", %{block: block} do
       arbitrary_hash = block_hash() |> hash_to_binary()
-      request = build_request("tol_getBlockByHash", [{"block_hash", arbitrary_hash}])
+      request = build_request("tol_getBlockByHash", [%{"block_hash" => arbitrary_hash}])
 
       assert [%{id: 1, error: "Block not found"}] = EthRPC.responses([request])
     end
 
     test "with invalid block_hash" do
-      request = build_request("tol_getBlockByHash", [{"block_hash", 1}])
+      request = build_request("tol_getBlockByHash", [%{"block_hash" => 1}])
 
       assert_raise(FunctionClauseError, fn ->
         EthRPC.responses([request])
@@ -127,7 +127,7 @@ defmodule Explorer.EthRPCTest do
       transactions: transactions,
       hash_binary: hash_binary_representation
     } do
-      request = build_request("tol_getBlockByIndex", [{"block_index", block_index}])
+      request = build_request("tol_getBlockByIndex", [%{"block_index" => block_index}])
 
       transaction_hashes = Enum.map(transactions, & &1.hash)
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
@@ -147,13 +147,13 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "with no data - return error", %{block: block} do
-      request = build_request("tol_getBlockByIndex", [{"block_index", 1}])
+      request = build_request("tol_getBlockByIndex", [%{"block_index" => 1}])
 
       assert [%{id: 1, error: "Block not found"}] = EthRPC.responses([request])
     end
 
     test "with invalid block_hash" do
-      request = build_request("tol_getBlockByIndex", [{"block_index", ""}])
+      request = build_request("tol_getBlockByIndex", [%{"block_index" => ""}])
 
       assert_raise(FunctionClauseError, fn ->
         EthRPC.responses([request])
@@ -248,7 +248,7 @@ defmodule Explorer.EthRPCTest do
       block: %Block{hash: block_hash} = block
     } do
       transaction_hash_binary_representation = hash_to_binary(transaction.hash)
-      request = build_request("tol_getTransaction", [{"transaction_hash", transaction_hash_binary_representation}])
+      request = build_request("tol_getTransaction", [%{"transaction_hash" => transaction_hash_binary_representation}])
 
       %Transaction{
         hash: hash,
@@ -300,7 +300,7 @@ defmodule Explorer.EthRPCTest do
 
     test "with not existing transaction - return a propper error message" do
       tx_hash = transaction_hash() |> hash_to_binary()
-      request = build_request("tol_getTransaction", [{"transaction_hash", tx_hash}])
+      request = build_request("tol_getTransaction", [%{"transaction_hash" => tx_hash}])
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
@@ -327,7 +327,7 @@ defmodule Explorer.EthRPCTest do
 
     test "without matched tx_hashes return an error" do
       tolar_address = "5493b8597964a2a7f0c93c49f9e4c4a170e0c42a5eb3beda0d"
-      request = build_request("tol_getTransactionList", [{"addresses", [tolar_address]}, {"limit", 10}, {"skip", 0}])
+      request = build_request("tol_getTransactionList", [%{"addresses" => [tolar_address], "limit" => 10, "skip" => 0}])
 
       assert [%{id: 1, error: "Transactions not found"}] == EthRPC.responses([request])
     end
@@ -337,7 +337,7 @@ defmodule Explorer.EthRPCTest do
       block: %Block{hash: block_hash} = block
     } do
       transaction_hash_binary_representation = hash_to_binary(transaction.hash)
-      request = build_request("tol_getTransactionList", [{"addresses", []}, {"limit", 10}, {"skip", 0}])
+      request = build_request("tol_getTransactionList", [%{"addresses" => [], "limit" => 10, "skip" => 0}])
 
       %Transaction{
         hash: hash,
@@ -390,7 +390,7 @@ defmodule Explorer.EthRPCTest do
       tolar_format_address = Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)
 
       request =
-        build_request("tol_getTransactionList", [{"addresses", [tolar_format_address]}, {"limit", 10}, {"skip", 0}])
+        build_request("tol_getTransactionList", [%{"addresses" => [tolar_format_address], "limit" => 10, "skip" => 0}])
 
       assert [%{id: 1, result: [%{sender_address: ^tolar_format_address}]}] = EthRPC.responses([request])
     end
@@ -403,7 +403,7 @@ defmodule Explorer.EthRPCTest do
       limit = 4
       tolar_format_address = Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)
 
-      params = [{"addresses", [tolar_format_address]}, {"limit", limit}, {"skip", 0}]
+      params = [%{"addresses" => [tolar_format_address], "limit" => limit, "skip" => 0}]
 
       request = build_request("tol_getTransactionList", params)
       insert_list(10, :transaction, from_address: from_address) |> Enum.map(&with_block(&1, block))
@@ -422,9 +422,7 @@ defmodule Explorer.EthRPCTest do
       skip = 2
 
       params = [
-        {"addresses", [Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)]},
-        {"limit", limit},
-        {"skip", skip}
+        %{"addresses" => [Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)], "limit" => limit, "skip" => skip}
       ]
 
       request = build_request("tol_getTransactionList", params)
@@ -476,7 +474,7 @@ defmodule Explorer.EthRPCTest do
 
     test "returns an error when transaction isn't found in the database", %{transaction: transaction} do
       tx_hash = transaction_hash() |> hash_to_binary()
-      request = build_request("tol_getTransactionReceipt", [{"transaction_hash", tx_hash}])
+      request = build_request("tol_getTransactionReceipt", [%{"transaction_hash" => tx_hash}])
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
@@ -489,22 +487,14 @@ defmodule Explorer.EthRPCTest do
       transaction_hash_binary_representation = hash_to_binary(transaction.hash)
 
       request =
-        build_request("tol_getTransactionReceipt", [{"transaction_hash", transaction_hash_binary_representation}])
+        build_request("tol_getTransactionReceipt", [%{"transaction_hash" => transaction_hash_binary_representation}])
 
       %Transaction{
         hash: tx_hash,
         index: tx_index,
-        value: value,
-        gas: gas,
-        gas_price: gas_price,
-        nonce: nonce,
-        input: data,
         gas_used: gas_used,
-        error: exception,
         has_error_in_internal_txs: excepted,
-        created_contract_address_hash: new_address,
-        from_address: from,
-        to_address: to
+        created_contract_address_hash: new_address
       } = transaction
 
       assert [
