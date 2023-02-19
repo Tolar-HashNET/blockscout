@@ -723,11 +723,11 @@ defmodule Explorer.EthRPC do
   def methods, do: @methods
 
   ###### Tolar Hashnet methods ######
-  def tol_get_block_by_hash({"block_hash", block_hash}) do
+  def tol_get_block_by_hash(%{"block_hash" => block_hash}) do
     TolarHashnet.tol_get_block_by_hash(block_hash)
   end
 
-  def tol_get_block_by_index({"block_index", block_index}) do
+  def tol_get_block_by_index(%{"block_index" => block_index}) do
     TolarHashnet.tol_get_block_by_index(block_index)
   end
 
@@ -739,15 +739,15 @@ defmodule Explorer.EthRPC do
     TolarHashnet.tol_get_block_count()
   end
 
-  def tol_get_transaction({"transaction_hash", tx_hash}) do
+  def tol_get_transaction(%{"transaction_hash" => tx_hash}) do
     TolarHashnet.tol_get_transaction(tx_hash)
   end
 
-  def tol_get_transaction_receipt({"transaction_hash", tx_hash}) do
+  def tol_get_transaction_receipt(%{"transaction_hash" => tx_hash}) do
     TolarHashnet.tol_get_transaction_receipt(tx_hash)
   end
 
-  def tol_get_transaction_list({"addresses", addresses}, {"limit", limit}, {"skip", skip}) do
+  def tol_get_transaction_list(%{"addresses" => addresses, "limit" => limit, "skip" => skip}) do
     TolarHashnet.tol_get_transaction_list(addresses, limit, skip)
   end
 end
