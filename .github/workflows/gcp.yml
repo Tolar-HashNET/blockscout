@@ -29,6 +29,14 @@ jobs:
         credentials_json: ${{  secrets.SER_GCP_ACCOUNT_KEY }}
         
     - name: Push Docker Image to Container Registry (GCR)
+      uses: Industrial/push-docker-gcr
+      with:
+        docker_image_name: tolar/blockscout
+        docker_image_tag: latest
+        docker_context: ./services/tolar/blockscout
+        gcr_host: gcr.io
+        gcr_project_id: $PROJECT_ID
+        gcr_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
       env:
         GIT_TAG: v0.1.0
       run: |-
