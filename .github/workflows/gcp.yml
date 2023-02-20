@@ -1,7 +1,11 @@
 name: Build and Push Image to Google Cloud Platform
-on:
+oon:
   push:
-    branches: [ tolar_master ]
+    branches:
+      - tolar_master
+  pull_request:
+    branches:
+      - tolar_master
 jobs:
   build-push-gcr:
     name: Build and Push to GCP
