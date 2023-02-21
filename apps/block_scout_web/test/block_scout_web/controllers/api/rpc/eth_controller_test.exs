@@ -537,4 +537,47 @@ defmodule BlockScoutWeb.API.RPC.EthControllerTest do
              ] = response
     end
   end
+
+  describe "tol_get_transaction_receipt" do
+    setup do
+      %{
+        api_params: %{
+          "method" => "tol_getTransactionReceipt",
+          "jsonrpc" => "2.0",
+          "id" => 0
+        }
+      }
+    end
+
+    test "with no transaction responds with transaction not found", %{conn: conn, api_params: api_params} do
+      tx_hash = transaction_hash() |> Explorer.Chain.Hash.to_iodata() |> IO.iodata_to_binary()
+      params = params(api_params, [%{"transaction_hash" => tx_hash}])
+
+      assert response =
+               conn
+               |> post("/api/eth-rpc", params)
+               |> json_response(200)
+    end
+  end
+
+  describe "tol_get_transactions_list" do
+    setup do
+      %{
+        api_params: %{
+          "method" => "tol_getTransactionList",
+          "jsonrpc" => "2.0",
+          "id" => 0
+        }
+      }
+    end
+
+    test "works", %{conn: conn, api_params: api_params} do
+      params = params(api_params, [%{"addresses" => [], "limit" => 1000, "skip" => 0}])
+
+      assert response =
+               conn
+               |> post("/api/eth-rpc", params)
+               |> json_response(200)
+    end
+  end
 end
