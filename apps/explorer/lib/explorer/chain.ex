@@ -639,6 +639,36 @@ defmodule Explorer.Chain do
     |> Enum.take(paging_options.page_size)
   end
 
+  @spec tol_address_to_logs(Hash.Address.t(), Keyword.t()) :: [Log.t()]
+  def tol_address_to_logs(address_hash, options \\ []) when is_list(options) do
+    paging_options = Keyword.get(options, :paging_options) || %PagingOptions{page_size: 50}
+
+    base_query =
+      from(log in Log,
+        inner_join: transaction in Transaction,
+        on: transaction.hash == log.transaction_hash,
+        order_by: [desc: log.block_number, desc: log.index],
+        where: log.address_hash == ^address_hash,
+        limit: ^paging_options.page_size,
+        select: log
+      )
+
+    wrapped_query =
+      from(
+        log in subquery(base_query),
+        inner_join: transaction in Transaction,
+        where:
+          log.block_hash == transaction.block_hash and
+            log.block_number == transaction.block_number and
+            log.transaction_hash == transaction.hash,
+        select: log
+      )
+
+    wrapped_query
+    |> filter_topic(options)
+    |> Repo.all()
+  end
+
   defp filter_topic(base_query, topic: topic) do
     from(log in base_query,
       where:
@@ -2169,6 +2199,7 @@ defmodule Explorer.Chain do
   def fetch_latest_block_hash() do
     Block
     |> select([block], block.hash)
+    |> where([block], block.consensus == true)
     |> order_by([block], desc: block.number)
     |> limit(1)
     |> Repo.one()
