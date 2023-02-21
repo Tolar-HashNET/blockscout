@@ -1,8 +1,17 @@
 defmodule Explorer.EthRPCTest do
-  use Explorer.DataCase
+  use Explorer.DataCase, async: true
 
   import Explorer.Factory,
-    only: [transaction_hash: 0, block_hash: 0, with_block: 2, insert: 2, insert_list: 2, insert_list: 3, build: 2]
+    only: [
+      transaction_hash: 0,
+      block_hash: 0,
+      with_block: 2,
+      insert: 1,
+      insert: 2,
+      insert_list: 2,
+      insert_list: 3,
+      build: 2
+    ]
 
   alias Explorer.EthRPC
 
@@ -422,7 +431,11 @@ defmodule Explorer.EthRPCTest do
       skip = 2
 
       params = [
-        %{"addresses" => [Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)], "limit" => limit, "skip" => skip}
+        %{
+          "addresses" => [Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)],
+          "limit" => limit,
+          "skip" => skip
+        }
       ]
 
       request = build_request("tol_getTransactionList", params)
@@ -522,6 +535,100 @@ defmodule Explorer.EthRPCTest do
       assert_tol_address(log.address)
       assert log.data == first_log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
       assert log.topics == ["0x00", "0x01"]
+    end
+  end
+
+  describe "tol_getBlockchainInfo/0" do
+    test "return info correctly" do
+      last_confirmed_block_hash = block_hash()
+
+      confirmed_block =
+        insert(:block, hash: last_confirmed_block_hash, consensus: true, number: 1, timestamp: DateTime.utc_now())
+
+      non_confirmed_block = insert(:block, consensus: false, number: 2, timestamp: DateTime.utc_now())
+
+      # Note, that this will be called automatically every time new block is added
+      Explorer.Chain.Cache.Block.set_count(1)
+
+      request = build_request("tol_getBlockchainInfo")
+
+      assert [
+               %{
+                 id: 1,
+                 result: %{
+                   confirmed_blocks_count: 1,
+                   total_blocks_count: 2,
+                   last_confirmed_block_hash: ^last_confirmed_block_hash
+                 }
+               }
+             ] = EthRPC.responses([request])
+    end
+  end
+
+  describe "tol_getPastEvents/2" do
+    setup do
+      address = insert(:address)
+      block = insert(:block, number: 0)
+      transaction_hash = transaction_hash()
+      transaction = insert(:transaction, hash: transaction_hash) |> with_block(block)
+
+      insert(:log,
+        block: transaction.block,
+        address: address,
+        transaction: transaction,
+        data: "0x010101",
+        block_hash: block.hash,
+        block_number: 0,
+        first_topic: "0x01",
+        second_topic: "0x02",
+        third_topic: "0x03",
+        fourth_topic: "0x04"
+      )
+
+      insert(:log,
+        block: transaction.block,
+        address: address,
+        transaction: transaction,
+        data: "0x010102",
+        block_hash: block.hash,
+        block_number: 0,
+        first_topic: "0x01",
+        second_topic: "0x02"
+      )
+
+      %{tol_address: Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(address.hash)}
+    end
+
+    test "returns all logs without topic provided", %{tol_address: tol_address} do
+      request = build_request("tol_getPastEvents", [%{"address" => tol_address, "topic" => nil}])
+
+      assert [%{id: 1, result: %{past_events: result}}] = EthRPC.responses([request])
+
+      assert Enum.count(result) == 2
+    end
+
+    test "filter by topic correctly", %{tol_address: tol_address} do
+      request = build_request("tol_getPastEvents", [%{"address" => tol_address, "topic" => "0x03"}])
+
+      assert [
+               %{
+                 id: 1,
+                 result: %{
+                   past_events: [
+                     %{
+                       address: address,
+                       topic: "0x01",
+                       topic_arg_0: "0x02",
+                       topic_arg_1: "0x03",
+                       topic_arg_2: "0x04",
+                       block_index: 0,
+                     }
+                   ]
+                 }
+               }
+             ] = EthRPC.responses([request])
+
+      assert_tol_address(address)
     end
   end
 

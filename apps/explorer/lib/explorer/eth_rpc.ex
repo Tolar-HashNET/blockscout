@@ -356,6 +356,70 @@ defmodule Explorer.EthRPC do
         }
       }
       """
+    },
+    "tol_getPastEvents" => %{
+      action: :tol_get_past_events,
+      params: [
+        %{name: "address", description: "Contract address", type: "string", default: nil, required: true},
+        %{name: "topic", description: "Topic", type: "string", default: nil, required: true}
+      ],
+      notes: "Returns emitted events by the contract.",
+      example: """
+      {
+        "id":1
+        "jsonrpc":"2.0",
+        "method":"tol_getPastEvents",
+          "params":{
+          "address":"5484c512b1cf3d45e7506a772...",
+          "topic":"0d13800e76908f21833df64e9..."
+        }
+      }
+      """,
+      result: """
+      {
+        "id":1,
+        "jsonrpc":"2.0",
+        "result": {
+          "past_events":[
+            {
+              "address":"5484c512b1cf3d45e7506a772...",
+              "topic":"0d13800e76908f21833df64e9...",
+              "topic_arg_0":"0000000000000000000000000...",
+              "topic_arg_1":"0000000000000000000000000...",
+              "topic_arg_2":"0000000000000000000000003...",
+              "data":"7468697320697320666972737...",
+              "transaction_hash":"3114c475957d5353ef7071533...",
+              "block_hash":"0d928eeb95baa6ce0ad292b3d...",
+              "block_index":12345
+            }
+          ]
+        }
+      }
+      """
+    },
+    "tol_getBlockchainInfo" => %{
+      action: :tol_get_blockchain_info,
+      params: [],
+      notes: "Retrieves blockchain statistics information.",
+      example: """
+      {
+        "id":1,
+        "jsonrpc":"2.0",
+        "method":"tol_getBlockchainInfo",
+        "params":{}
+      }
+      """,
+      result: """
+      {
+        "id":1,
+        "jsonrpc":"2.0",
+        "result":{
+          "confirmed_blocks_count":100,
+          "total_blocks_count":100,
+          "last_confirmed_block_hash":""0d928eeb95baa6ce0ad292b3dc0f0b050ae0429cc8da1af906658f1bc2072106""
+        }
+      }
+      """
     }
   }
 
@@ -723,12 +787,8 @@ defmodule Explorer.EthRPC do
   def methods, do: @methods
 
   ###### Tolar Hashnet methods ######
-  def tol_get_block_by_hash(%{"block_hash" => block_hash}) do
-    TolarHashnet.tol_get_block_by_hash(block_hash)
-  end
-
-  def tol_get_block_by_index(%{"block_index" => block_index}) do
-    TolarHashnet.tol_get_block_by_index(block_index)
+  def tol_get_blockchain_info do
+    TolarHashnet.tol_get_blockchain_info()
   end
 
   def tol_get_latest_block() do
@@ -739,12 +799,24 @@ defmodule Explorer.EthRPC do
     TolarHashnet.tol_get_block_count()
   end
 
+  def tol_get_block_by_hash(%{"block_hash" => block_hash}) do
+    TolarHashnet.tol_get_block_by_hash(block_hash)
+  end
+
+  def tol_get_block_by_index(%{"block_index" => block_index}) do
+    TolarHashnet.tol_get_block_by_index(block_index)
+  end
+
   def tol_get_transaction(%{"transaction_hash" => tx_hash}) do
     TolarHashnet.tol_get_transaction(tx_hash)
   end
 
   def tol_get_transaction_receipt(%{"transaction_hash" => tx_hash}) do
     TolarHashnet.tol_get_transaction_receipt(tx_hash)
+  end
+
+  def tol_get_past_events(%{"address" => address, "topic" => topic}) do
+    TolarHashnet.tol_get_past_events(address, topic)
   end
 
   def tol_get_transaction_list(%{"addresses" => addresses, "limit" => limit, "skip" => skip}) do

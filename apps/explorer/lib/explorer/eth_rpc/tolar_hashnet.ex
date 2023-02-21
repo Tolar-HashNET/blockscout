@@ -4,7 +4,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   """
   alias Explorer.Chain
   alias Explorer.Chain.Cache.Block, as: BlockCache
-  alias Explorer.Chain.{Address, Block, Data, Hash, Transaction, Wei, Gas}
+  alias Explorer.Chain.{Block, Data, Hash, Transaction, Wei, Gas}
 
   @typep tolar_formatted_address_hash :: String.t()
 
@@ -50,6 +50,18 @@ defmodule Explorer.EthRPC.TolarHashnet do
            required(:logs) => [log()]
          }
 
+  @typep past_events_response :: %{
+           required(:address) => tolar_formatted_address_hash,
+           required(:topic) => topic(),
+           required(:topic_arg_0) => topic(),
+           required(:topic_arg_1) => topic(),
+           required(:topic_arg_2) => topic(),
+           required(:data) => Data.t(),
+           required(:transaction_hash) => Hash.t(),
+           required(:block_hash) => Hash.t(),
+           required(:block_index) => EthereumJSONRPC.block_number()
+         }
+
   @typep log :: %{
            address: tolar_formatted_address_hash(),
            topics: [String.t()],
@@ -57,6 +69,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
          }
 
   @typep error :: String.t()
+
+  @typep topic :: String.t() | nil
 
   @spec tol_get_block_by_hash(String.t()) :: {:ok, tol_block_response()} | {:error, error()}
   def tol_get_block_by_hash(block_hash) when is_binary(block_hash) do
@@ -125,7 +139,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   @spec tol_get_transaction_list([String.t()], non_neg_integer(), non_neg_integer()) ::
           {:ok, [transaction_response()]} | {:error, error()}
   def tol_get_transaction_list(addresses, limit, skip) do
-    with eth_addresses <- toalr_addresses_to_eth(addresses),
+    with eth_addresses <- tolar_addresses_to_eth(addresses),
          [%Transaction{} | _] = transactions <-
            Chain.fetch_transactions_for_addresses(eth_addresses,
              limit: limit,
@@ -137,6 +151,44 @@ defmodule Explorer.EthRPC.TolarHashnet do
       _ ->
         {:error, "Transactions not found"}
     end
+  end
+
+  @spec tol_get_past_events(tolar_formatted_address_hash(), topic()) ::
+          {:ok, %{past_events: past_events_response()}} | {:error, error()}
+  def tol_get_past_events(address, topic) when is_binary(topic) do
+    {:ok, eth_address} = tolar_address_to_eth(address)
+    formatted_topic = if String.starts_with?(topic, "0x"), do: topic, else: "0x" <> topic
+
+    case Chain.tol_address_to_logs(eth_address, topic: formatted_topic) do
+      [] ->
+        {:error, "Address not found"}
+
+      logs ->
+        {:ok, %{past_events: build_full_log_response(logs)}}
+    end
+  end
+
+  def tol_get_past_events(address, nil) do
+    {:ok, eth_address} = tolar_address_to_eth(address)
+
+    case Chain.tol_address_to_logs(eth_address) do
+      [] ->
+        {:error, "Address not found"}
+
+      logs ->
+        {:ok, %{past_events: build_full_log_response(logs)}}
+    end
+  end
+
+  @spec tol_get_blockchain_info() ::
+          {:ok,
+           %{
+             confirmed_blocks_count: non_neg_integer(),
+             total_blocks_count: non_neg_integer(),
+             last_confirmed_block_hash: Hash.Address.t()
+           }}
+  def tol_get_blockchain_info() do
+    {:ok, blockchain_info()}
   end
 
   @tolar_address_prefix "54"
@@ -167,7 +219,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   def tolar_address_to_eth(_), do: {:error, :invalid_format}
 
-  def toalr_addresses_to_eth(addresses) when is_list(addresses) do
+  def tolar_addresses_to_eth(addresses) when is_list(addresses) do
     Enum.reduce(addresses, [], fn address, acc ->
       case tolar_address_to_eth(address) do
         {:ok, hash} ->
@@ -214,6 +266,49 @@ defmodule Explorer.EthRPC.TolarHashnet do
     }
   end
 
+  defp build_transaction_receipt_response(transaction) do
+    %{
+      hash: transaction.hash,
+      block_hash: transaction.block_hash,
+      block_number: transaction.block_number,
+      transaction_index: transaction.index,
+      sender_address: eth_address_to_tolar(transaction.from_address.hash),
+      receiver_address: eth_address_to_tolar(transaction.to_address.hash),
+      new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
+      gas_used: transaction.gas_used,
+      excepted: transaction.has_error_in_internal_txs,
+      logs: build_logs(transaction)
+    }
+  end
+
+  defp build_logs(transaction) do
+    Enum.map(transaction.logs, fn log ->
+      %{
+        address: eth_address_to_tolar(log.address_hash),
+        topics: Enum.reject([log.first_topic, log.second_topic, log.third_topic, log.fourth_topic], &is_nil/1),
+        data: log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
+      }
+    end)
+  end
+
+  defp build_full_log_response(logs) do
+    Enum.map(logs, fn log ->
+      %{
+        address: eth_address_to_tolar(log.address_hash),
+        topic: log.first_topic,
+        topic_arg_0: log.second_topic,
+        topic_arg_1: log.third_topic,
+        topic_arg_2: log.fourth_topic,
+        data: log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary(),
+        transaction_hash: log.transaction_hash,
+        block_hash: log.block_hash,
+        block_index: log.block_number
+      }
+    end)
+  end
+
+  @zero_address "54000000000000000000000000000000000000000023199e2b"
+
   defp blockchain_info() do
     %{
       confirmed_blocks_count: BlockCache.estimated_count(),
@@ -222,6 +317,6 @@ defmodule Explorer.EthRPC.TolarHashnet do
     }
   end
 
-  defp maybe_convert_to_tolar_hash(nil), do: nil
+  defp maybe_convert_to_tolar_hash(nil), do: @zero_address
   defp maybe_convert_to_tolar_hash(%Hash{} = hash), do: eth_address_to_tolar(hash)
 end
