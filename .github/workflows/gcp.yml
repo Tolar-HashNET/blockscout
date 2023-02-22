@@ -21,13 +21,13 @@ jobs:
         gcloud auth configure-docker --quiet
         
     - name: Build and push Docker
-        uses: RafikFarhad/push-to-gcr-github-action@v4.1
-        with:
-          gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
-          registry: gcr.io
-          project_id: ${{ GCR_PROJECT_ID }}
-          image_name: ${{ IMAGE_NAME }}
-          image_tag: v0.1.0, latest
+      uses: RafikFarhad/push-to-gcr-github-action@v4.1
+      with:
+        gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
+        registry: gcr.io
+        project_id: ${{ GCR_PROJECT_ID }}
+        image_name: ${{ IMAGE_NAME }}
+        image_tag: v0.1.0, latest
     
 #    - name: Push Docker Image to Container Registry (GCR)
 #       env:
