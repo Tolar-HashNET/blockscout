@@ -27,18 +27,7 @@ jobs:
       env:
         GIT_TAG: v0.1.0
       run: |-
-        gcloud auth activate-service-account github-actions-grc-blockscout@tolar-devops-311210.iam.gserviceaccount.com --key-file={
-        "type": "service_account",
-        "project_id": "tolar-devops-311210",
-        "private_key_id": "feeaac1ba8f55403be83cdbaba4217143574b04f",
-        "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDfXzTLVjP5AbCS\nL9v4+A5W0c49gZzjxf0Vvq3p2deKZ61lfkv6Vx0A8J3HWZSuuFo8tsBVY6HhCrMN\naBOk7ikr9/ILiPgEdMi/dg1Fx3lCHixbSR+4NVyG27a7UvCZ8zecpXhT04kyvV94\nS2lGc6RwcFL/Jk40k2/PLkj5MrUPf396AvxncTyW1qB1gx6uNT/frNCqNs0opIvk\nN1XcAjHJCrQhRf+48BWOu73BKaSa9KbIwp3hpoZ2Ymo5nWj/hRJVInSsCuAg/tqO\n0JrZ2KWkmdWzy7ntVedplaTjJTkSJRFYv7GS9XwfwgfJkyUBzaIDWjWxYuKFssZV\nf3cW/ha5AgMBAAECggEAEWxjudinhSzUkRKanfj7ZVpINBQAIOQ4sZGGD0+muG0N\n4XTQiF5zLLeYFwytxFMs9r9qkT6MSfmDrfAIWD0biQp2HuA4OGDDp+uVbXP5yWaB\nHz2886l15i8NOd9mVRvboqRllmRRt1t+Luvy8kPi98JLNwvN3dwCRK7fklCaPvMV\no3wgHZ2JIqUUZw/Vu6r3imzp9H7Xty3wu3fecee3QTUo7kefB/tyr3ZFbezycEkv\nPtpxQKXlwtpL0cgiC9JObl+XF6mlepZcn1+/z+FbGgM2pC7TeiOn8rribuPkNmWg\nOTPP3HDR9qfFn6hk5gPn1375T7BYPX0lzwPMykN7gQKBgQD/aOTpjNib6g2hDgCa\nm8IbMbUn2f9ixdZPoKu5P+HAU8HNuaRjMAx9YzEnHz8nGqXQSd8RAM1AqQtx3Css\n2/7lKBEbmT7/J8phCmik6/hKVVIxu6SJ/r+DRYql653TvCOHBaPGDgKtypvAP6e9\nk6Bp2N7X1EUWy7f0FpeMC1VHJQKBgQDf41uW+SlQ8PsfpcuXIG/HEExfbZ9eEMtv\neTL6RHtTw/ysitvWPqYqQLoEmC6UEygAKKt1FiyuuoHnVaLrajeKfOQ0QNTV8c0n\nGgVyit0AmXrjTGlOu1nKyChiO7gd6PGVmdFZrcc3uTgX5I9uuKcd9HTqjOiEH3gN\nVHWMmEP3BQKBgQCVXA0JuxDs1ImV1m9p+o4fgwkSPfyIEXOLa0Ug9weYhiJ+oQJN\n8spLBRe4biBrSL0QujJVaiedmX2U3xDskdZUwgKHJi3d3rIN351kXI39Qjnn1Xia\nLjxmkuNKtie8q3gHPLgSWR0d7q74VQFN7qfPXkCq7Hpeo1F2z0NeZT5AdQKBgQDS\nKkq/3gS6xnv1qV0D8J787n/C1NTVKE7PxaXk6IQcjc2S6oaTBxxUbY4w4epXdeQG\nwiaxMq+fFdT7o5fcBUk95x8RLgqdCu7Z1cNnUpNDDNAerovsLFKN2HaQQB8FdLXT\nCSFMXaS02lmdlCBQf2Xg6KkXxE5AOIopeS8fW4/xQQKBgGTiGQWh0gtpQyZnTBVL\nWP6kEmO21Nxt6WMZ2sQCfF7JzCDbhN2HkzsJbeFRoeqTMmF/TL8ffsIolCUcxnrP\n9DVY7Z9wNMjpMr2cShUSGKRmtU2uYtUed+rhBGoTcnzF4QJUsOLwhKDF8oHttwCu\nduE5AhDjPqMhCYRcPaCoiV88\n-----END PRIVATE KEY-----\n",
-        "client_email": "github-actions-grc-blockscout@tolar-devops-311210.iam.gserviceaccount.com",
-        "client_id": "113201897175777706596",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/github-actions-grc-blockscout%40tolar-devops-311210.iam.gserviceaccount.com"
-        }
+        gcloud auth activate-service-account github-actions-grc-blockscout@tolar-devops-311210.iam.gserviceaccount.com --key-file=
         docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
         docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
         docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
