@@ -27,8 +27,8 @@ jobs:
       with:
         gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
         registry: gcr.io
-        project_id: ${{ PROJECT_ID }}
-        image_name: ${{ IMAGE_NAME }}
+        project_id: ${{ env.PROJECT_ID }}
+        image_name: ${{ env.IMAGE_NAME }}
         image_tag: v0.1.0, latest
     
 #    - name: Push Docker Image to Container Registry (GCR)
