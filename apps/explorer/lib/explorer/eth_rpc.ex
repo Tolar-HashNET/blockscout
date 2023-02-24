@@ -717,6 +717,47 @@ defmodule Explorer.EthRPC do
     {:error, "invalid rpc version"}
   end
 
+  ###### Tolar Hashnet methods ######
+  defp do_eth_request(%{"method" => "tol_getBlockchainInfo"}) do
+    TolarHashnet.tol_get_blockchain_info()
+  end
+
+  defp do_eth_request(%{"method" => "tol_getLatestBlock"}) do
+    TolarHashnet.tol_get_latest_block()
+  end
+
+  defp do_eth_request(%{"method" => "tol_getBlockCount"}) do
+    TolarHashnet.tol_get_block_count()
+  end
+
+  defp do_eth_request(%{"params" => [%{"block_hash" => block_hash}], "method" => "tol_getBlockByHash"}) do
+    TolarHashnet.tol_get_block_by_hash(block_hash)
+  end
+
+  defp do_eth_request(%{"params" => [%{"block_index" => block_index}], "method" => "tol_getBlockByIndex"}) do
+    TolarHashnet.tol_get_block_by_index(block_index)
+  end
+
+  defp do_eth_request(%{"params" => [%{"transaction_hash" => tx_hash}], "method" => "tol_getTransaction"}) do
+    TolarHashnet.tol_get_transaction(tx_hash)
+  end
+
+  defp do_eth_request(%{"params" => [%{"transaction_hash" => tx_hash}], "method" => "tol_getTransactionReceipt"}) do
+    TolarHashnet.tol_get_transaction_receipt(tx_hash)
+  end
+
+  defp do_eth_request(%{"params" => [%{"address" => address, "topic" => topic}], "method" => "tol_getPastEvents"}) do
+    TolarHashnet.tol_get_past_events(address, topic)
+  end
+
+  defp do_eth_request(%{"params" => [%{"addresses" => addresses, "limit" => limit, "skip" => skip}], "method" => "tol_getTransactionList"}) do
+    TolarHashnet.tol_get_transaction_list(addresses, limit, skip)
+  end
+
+  defp do_eth_request(%{"method" => "tol_" <> method, "params" => [params]}) do
+    {:error, "Unknown tol method: #{method}. Or invalid params: #{params}"}
+  end
+
   defp do_eth_request(%{"jsonrpc" => "2.0", "method" => method, "params" => params})
        when is_list(params) do
     with {:ok, action} <- get_action(method),
@@ -785,41 +826,4 @@ defmodule Explorer.EthRPC do
   end
 
   def methods, do: @methods
-
-  ###### Tolar Hashnet methods ######
-  def tol_get_blockchain_info do
-    TolarHashnet.tol_get_blockchain_info()
-  end
-
-  def tol_get_latest_block() do
-    TolarHashnet.tol_get_latest_block()
-  end
-
-  def tol_get_block_count() do
-    TolarHashnet.tol_get_block_count()
-  end
-
-  def tol_get_block_by_hash(%{"block_hash" => block_hash}) do
-    TolarHashnet.tol_get_block_by_hash(block_hash)
-  end
-
-  def tol_get_block_by_index(%{"block_index" => block_index}) do
-    TolarHashnet.tol_get_block_by_index(block_index)
-  end
-
-  def tol_get_transaction(%{"transaction_hash" => tx_hash}) do
-    TolarHashnet.tol_get_transaction(tx_hash)
-  end
-
-  def tol_get_transaction_receipt(%{"transaction_hash" => tx_hash}) do
-    TolarHashnet.tol_get_transaction_receipt(tx_hash)
-  end
-
-  def tol_get_past_events(%{"address" => address, "topic" => topic}) do
-    TolarHashnet.tol_get_past_events(address, topic)
-  end
-
-  def tol_get_transaction_list(%{"addresses" => addresses, "limit" => limit, "skip" => skip}) do
-    TolarHashnet.tol_get_transaction_list(addresses, limit, skip)
-  end
 end
