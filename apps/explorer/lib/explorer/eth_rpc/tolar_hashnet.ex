@@ -110,9 +110,12 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_transaction(String.t()) :: {:ok, transaction_response()} | {:error, error()}
   def tol_get_transaction(transaction_hash) do
-    case Chain.fetch_transaction_by_hash(transaction_hash) do
-      %Transaction{} = transaction ->
-        {:ok, build_transaction_response(transaction)}
+    with {:ok, _} <- validate_full_hash(transaction_hash),
+         %Transaction{} = transaction <- Chain.fetch_transaction_by_hash(transaction_hash) do
+      {:ok, build_transaction_response(transaction)}
+    else
+      :error ->
+        {:error, "Invalid transaction hash"}
 
       _ ->
         {:error, "Transaction not found"}
@@ -121,9 +124,13 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_transaction_receipt(String.t()) :: {:ok, transaction_receipt_response()} | {:error, error()}
   def tol_get_transaction_receipt(transaction_hash) do
-    case Chain.fetch_transaction_by_hash(transaction_hash, [:block, :from_address, :to_address, :logs]) do
-      %Transaction{} = transaction ->
-        {:ok, build_transaction_receipt_response(transaction)}
+    with {:ok, _} <- validate_full_hash(transaction_hash),
+         %Transaction{} = transaction <-
+           Chain.fetch_transaction_by_hash(transaction_hash, [:block, :from_address, :to_address, :logs]) do
+      {:ok, build_transaction_receipt_response(transaction)}
+    else
+      :error ->
+        {:error, "Invalid transaction hash"}
 
       _ ->
         {:error, "Transaction not found"}
@@ -319,4 +326,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   defp maybe_convert_to_tolar_hash(nil), do: @zero_address
   defp maybe_convert_to_tolar_hash(%Hash{} = hash), do: eth_address_to_tolar(hash)
+
+  defp validate_full_hash(transaction_hash) do
+    Explorer.Chain.Hash.Full.cast(transaction_hash)
+  end
 end

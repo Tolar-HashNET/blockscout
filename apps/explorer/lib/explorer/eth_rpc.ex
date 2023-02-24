@@ -730,32 +730,35 @@ defmodule Explorer.EthRPC do
     TolarHashnet.tol_get_block_count()
   end
 
-  defp do_eth_request(%{"params" => [%{"block_hash" => block_hash}], "method" => "tol_getBlockByHash"}) do
+  defp do_eth_request(%{"params" => %{"block_hash" => block_hash}, "method" => "tol_getBlockByHash"}) do
     TolarHashnet.tol_get_block_by_hash(block_hash)
   end
 
-  defp do_eth_request(%{"params" => [%{"block_index" => block_index}], "method" => "tol_getBlockByIndex"}) do
+  defp do_eth_request(%{"params" => %{"block_index" => block_index}, "method" => "tol_getBlockByIndex"}) do
     TolarHashnet.tol_get_block_by_index(block_index)
   end
 
-  defp do_eth_request(%{"params" => [%{"transaction_hash" => tx_hash}], "method" => "tol_getTransaction"}) do
+  defp do_eth_request(%{"params" => %{"transaction_hash" => tx_hash}, "method" => "tol_getTransaction"}) do
     TolarHashnet.tol_get_transaction(tx_hash)
   end
 
-  defp do_eth_request(%{"params" => [%{"transaction_hash" => tx_hash}], "method" => "tol_getTransactionReceipt"}) do
+  defp do_eth_request(%{"params" => %{"transaction_hash" => tx_hash}, "method" => "tol_getTransactionReceipt"}) do
     TolarHashnet.tol_get_transaction_receipt(tx_hash)
   end
 
-  defp do_eth_request(%{"params" => [%{"address" => address, "topic" => topic}], "method" => "tol_getPastEvents"}) do
+  defp do_eth_request(%{"params" => %{"address" => address, "topic" => topic}, "method" => "tol_getPastEvents"}) do
     TolarHashnet.tol_get_past_events(address, topic)
   end
 
-  defp do_eth_request(%{"params" => [%{"addresses" => addresses, "limit" => limit, "skip" => skip}], "method" => "tol_getTransactionList"}) do
+  defp do_eth_request(%{
+         "params" => %{"addresses" => addresses, "limit" => limit, "skip" => skip},
+         "method" => "tol_getTransactionList"
+       }) do
     TolarHashnet.tol_get_transaction_list(addresses, limit, skip)
   end
 
-  defp do_eth_request(%{"method" => "tol_" <> method, "params" => [params]}) do
-    {:error, "Unknown tol method: #{method}. Or invalid params: #{params}"}
+  defp do_eth_request(%{"method" => "tol_" <> method, "params" => params}) do
+    {:error, "Unknown tol method: tol_#{method}. Or invalid params: #{params}"}
   end
 
   defp do_eth_request(%{"jsonrpc" => "2.0", "method" => method, "params" => params})
