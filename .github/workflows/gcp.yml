@@ -5,7 +5,7 @@ on:
     branches: [ tolar_master ]
     
 env:
-  IMAGE_NAME: tolar/blockscout
+  IMAGE_NAME: tolar-blockscout
   GCR_PROJECT_ID: ${{ secrets.GCR_PROJECT_ID }}
       
 jobs:
