@@ -17,8 +17,12 @@ jobs:
     steps: 
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: Tolar-HashNET/blockscout
+          
       - name: my-step
         run: pwd
+        
       - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
         with:
           gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
