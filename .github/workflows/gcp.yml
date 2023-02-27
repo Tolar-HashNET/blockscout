@@ -18,7 +18,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: Tolar-HashNET/blockscout
+          repository: Tolar-HashNET/blockscout
+          ref: tolar_master
           
       - name: my-step
         run: pwd
