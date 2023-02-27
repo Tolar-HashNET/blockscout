@@ -23,5 +23,5 @@ jobs:
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: latest
           dockerfile: ./docker/Dockerfile
-          context: ../
+          context: .
           build_args: COIN=tolar
