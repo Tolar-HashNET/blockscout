@@ -5,8 +5,8 @@ on:
     branches: [ tolar_master ]
     
 env:
-  IMAGE_NAME: tolar-blockscout
-  PROJECT_ID: ${{ secrets.GCR_PROJECT_ID }}
+  IMAGE_NAME: tolar/blockscout
+  GCR_PROJECT_ID: ${{ secrets.GCR_PROJECT_ID }}
       
 jobs:
   build-and-push-to-gcr:
@@ -19,7 +19,7 @@ jobs:
         with:
           gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
           registry: gcr.io
-          project_id: ${{ env.PROJECT_ID }}
+          project_id: ${{ env.GCR_PROJECT_ID }}
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: latest
           dockerfile: ./Dockerfile
