@@ -15,6 +15,10 @@ jobs:
       contents: 'read'
       id-token: 'write'
     steps: 
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: my-step
+        run: pwd
       - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
         with:
           gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
@@ -22,6 +26,6 @@ jobs:
           project_id: ${{ env.GCR_PROJECT_ID }}
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: latest
-          dockerfile: ~/docker/Dockerfile
-          context: ~/
+          dockerfile: ./docker/Dockerfile
+          context: .
           build_args: COIN=tolar
