@@ -5,40 +5,23 @@ on:
     branches: [ tolar_master ]
     
 env:
-  IMAGE_NAME: tolar/blockscout
-  PROJECT_ID: tolar-devops-311210    
-
+  IMAGE_NAME: tolar-blockscout
+  PROJECT_ID: ${{ secrets.GCR_PROJECT_ID }}
+      
 jobs:
-  build-push-gcr:
-    name: Build and Push to GCP
+  build-and-push-to-gcr:
     runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      
-    - uses: google-github-actions/setup-gcloud@main
-      with:
-        service_account_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
-        project_id: ${{ env.PROJECT_ID }}
-        export_default_credentials: true  
-
-    - name: Build Docker Image
-      run: cd ./docker && make build
-      
-    - name: Automatic Tagging of Releases
-      id: increment-git-tag
-      run: |
-        bash ./scripts/git_update.sh -v tolar_master
-      
-    - name: Configure Docker Client
-      run: |-
-        gcloud auth configure-docker --quiet
-    
-    - name: Push Docker Image to Container Registry (GCR)
-      env:
-        GIT_TAG: v0.1.0
-      run: |-
-        docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-        docker tag $IMAGE_NAME:latest gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
-        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$GIT_TAG
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps: 
+      - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
+        with:
+          gcloud_service_key: ${{ secrets.SER_GCP_ACCOUNT_KEY }}
+          registry: gcr.io
+          project_id: ${{ env.PROJECT_ID }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: latest
+          dockerfile: ./docker/Dockerfile
+          context: ../
+          build_args: COIN=tolar
