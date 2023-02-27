@@ -22,6 +22,6 @@ jobs:
           project_id: ${{ env.GCR_PROJECT_ID }}
           image_name: ${{ env.IMAGE_NAME }}
           image_tag: latest
-          dockerfile: ./docker/Dockerfile
-          context: .
+          dockerfile: ~/docker/Dockerfile
+          context: ~/
           build_args: COIN=tolar
