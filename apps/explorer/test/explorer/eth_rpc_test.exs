@@ -276,6 +276,8 @@ defmodule Explorer.EthRPCTest do
       } = transaction
 
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+      string_value = Decimal.to_string(value.value)
+      gas_price_string = Decimal.to_string(gas_price.value)
 
       assert [
                %{
@@ -286,10 +288,10 @@ defmodule Explorer.EthRPCTest do
                    new_address: "54000000000000000000000000000000000000000023199e2b",
                    transaction_hash: ^hash,
                    transaction_index: ^index,
-                   value: ^value,
+                   value: ^string_value,
                    block_hash: ^block_hash,
                    gas: ^gas,
-                   gas_price: ^gas_price,
+                   gas_price: ^gas_price_string,
                    nonce: ^nonce,
                    data: ^data,
                    gas_used: ^gas_used,
@@ -315,13 +317,19 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "parses raw string transaction address correctly" do
-      request = build_request("tol_getTransaction", %{"transaction_hash" => "ea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"})
+      request =
+        build_request("tol_getTransaction", %{
+          "transaction_hash" => "ea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"
+        })
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
 
     test "parses raw string transaction address correctly with 0x prefix" do
-      request = build_request("tol_getTransaction", %{"transaction_hash" => "0xea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"})
+      request =
+        build_request("tol_getTransaction", %{
+          "transaction_hash" => "0xea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"
+        })
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
@@ -377,6 +385,8 @@ defmodule Explorer.EthRPCTest do
       } = transaction
 
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+      string_value = Decimal.to_string(value.value)
+      string_gas_price = Decimal.to_string(gas_price.value)
 
       assert [
                %{
@@ -388,10 +398,10 @@ defmodule Explorer.EthRPCTest do
                      new_address: "54000000000000000000000000000000000000000023199e2b",
                      transaction_hash: ^hash,
                      transaction_index: ^index,
-                     value: ^value,
+                     value: ^string_value,
                      block_hash: ^block_hash,
                      gas: ^gas,
-                     gas_price: ^gas_price,
+                     gas_price: ^string_gas_price,
                      nonce: ^nonce,
                      data: ^data,
                      gas_used: ^gas_used,
@@ -548,7 +558,10 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "parses raw string transaction address correctly with 0x prefix" do
-      request = build_request("tol_getTransactionReceipt", %{"transaction_hash" => "0xea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"})
+      request =
+        build_request("tol_getTransactionReceipt", %{
+          "transaction_hash" => "0xea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"
+        })
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
