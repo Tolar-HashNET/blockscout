@@ -314,10 +314,16 @@ defmodule Explorer.EthRPCTest do
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
 
-    test "with invalid hash - return a propper error message" do
-      request = build_request("tol_getTransaction", %{"transaction_hash" => "cebdae28242fa6953c3699f42b943c008a08e1f4bcfedac357104aa32cbc544d"})
+    test "parses raw string transaction address correctly" do
+      request = build_request("tol_getTransaction", %{"transaction_hash" => "ea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"})
 
-      assert [%{id: 1, error: "Invalid transaction hash"}] == EthRPC.responses([request])
+      assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
+    end
+
+    test "parses raw string transaction address correctly with 0x prefix" do
+      request = build_request("tol_getTransaction", %{"transaction_hash" => "0xea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"})
+
+      assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
   end
 
@@ -539,6 +545,12 @@ defmodule Explorer.EthRPCTest do
       assert_tol_address(log.address)
       assert log.data == first_log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
       assert log.topics == ["0x00", "0x01"]
+    end
+
+    test "parses raw string transaction address correctly with 0x prefix" do
+      request = build_request("tol_getTransactionReceipt", %{"transaction_hash" => "0xea54d113d60c85d955330ab374908dbe0e020b74adda00e4ac043e4da83b1289"})
+
+      assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
     end
   end
 
