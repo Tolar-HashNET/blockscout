@@ -110,8 +110,9 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_transaction(String.t()) :: {:ok, transaction_response()} | {:error, error()}
   def tol_get_transaction(transaction_hash) do
-    with {:ok, _} <- validate_full_hash(transaction_hash),
-         %Transaction{} = transaction <- Chain.fetch_transaction_by_hash(transaction_hash) do
+    with normalized_hash <- normalize_transaction_hash(transaction_hash),
+         {:ok, parsed_tx_hash} <- validate_full_hash(normalized_hash),
+         %Transaction{} = transaction <- Chain.fetch_transaction_by_hash(parsed_tx_hash) do
       {:ok, build_transaction_response(transaction)}
     else
       :error ->
@@ -124,9 +125,10 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_transaction_receipt(String.t()) :: {:ok, transaction_receipt_response()} | {:error, error()}
   def tol_get_transaction_receipt(transaction_hash) do
-    with {:ok, _} <- validate_full_hash(transaction_hash),
+    with normalized_hash <- normalize_transaction_hash(transaction_hash),
+         {:ok, tx_hash} <- validate_full_hash(normalized_hash),
          %Transaction{} = transaction <-
-           Chain.fetch_transaction_by_hash(transaction_hash, [:block, :from_address, :to_address, :logs]) do
+           Chain.fetch_transaction_by_hash(tx_hash, [:block, :from_address, :to_address, :logs]) do
       {:ok, build_transaction_receipt_response(transaction)}
     else
       :error ->
@@ -328,6 +330,10 @@ defmodule Explorer.EthRPC.TolarHashnet do
   defp maybe_convert_to_tolar_hash(%Hash{} = hash), do: eth_address_to_tolar(hash)
 
   defp validate_full_hash(transaction_hash) do
-    Explorer.Chain.Hash.Full.cast(transaction_hash)
+    Hash.Full.cast(transaction_hash)
   end
+
+  defp normalize_transaction_hash("0x" <> tx_hash), do: "0x" <> tx_hash
+
+  defp normalize_transaction_hash(tx_hash), do: "0x" <> tx_hash
 end
