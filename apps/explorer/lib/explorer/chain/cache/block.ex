@@ -20,6 +20,7 @@ defmodule Explorer.Chain.Cache.Block do
 
   require Logger
 
+  alias Explorer.Chain
   alias Explorer.Chain.Block
   alias Explorer.Repo
 
@@ -55,7 +56,7 @@ defmodule Explorer.Chain.Cache.Block do
     {:ok, task} =
       Task.start(fn ->
         try do
-          result = fetch_count_consensus_block()
+          result = Chain.fetch_count_consensus_blocks()
 
           set_count(result)
         rescue
@@ -85,16 +86,5 @@ defmodule Explorer.Chain.Cache.Block do
       {integer, ""} -> :timer.seconds(integer)
       _ -> @default_cache_period
     end
-  end
-
-  @spec fetch_count_consensus_block() :: non_neg_integer
-  defp fetch_count_consensus_block do
-    query =
-      from(block in Block,
-        select: count(block.hash),
-        where: block.consensus == true
-      )
-
-    Repo.one!(query, timeout: :infinity) || 0
   end
 end

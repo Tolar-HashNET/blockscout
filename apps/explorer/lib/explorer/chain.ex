@@ -2212,6 +2212,17 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
+  @spec fetch_count_consensus_blocks() :: non_neg_integer
+  def fetch_count_consensus_blocks do
+    query =
+      from(block in Block,
+        select: count(block.hash),
+        where: block.consensus == true
+      )
+
+    Repo.one(query) || 0
+  end
+
   @doc """
   The number of `t:Explorer.Chain.InternalTransaction.t/0`.
 
