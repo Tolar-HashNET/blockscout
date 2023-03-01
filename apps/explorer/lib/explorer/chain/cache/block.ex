@@ -65,7 +65,7 @@ defmodule Explorer.Chain.Cache.Block do
     {:ok, task} =
       Task.start(fn ->
         try do
-          result = fetch_count_consensus_block()
+          result = Chain.fetch_count_consensus_blocks()
 
           params = %{
             counter_type: @cache_key,
@@ -104,5 +104,15 @@ defmodule Explorer.Chain.Cache.Block do
       )
 
     Repo.one!(query, timeout: :infinity) || 0
+  end
+
+  defp cache_period do
+    "CACHE_BLOCK_COUNT_PERIOD"
+    |> System.get_env("")
+    |> Integer.parse()
+    |> case do
+      {integer, ""} -> :timer.seconds(integer)
+      _ -> @default_cache_period
+    end
   end
 end

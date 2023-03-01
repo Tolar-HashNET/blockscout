@@ -3,7 +3,6 @@ defmodule Explorer.EthRPC.TolarHashnet do
   JsonRPC methods handling for Tolar hashnet
   """
   alias Explorer.Chain
-  alias Explorer.Chain.Cache.Block, as: BlockCache
   alias Explorer.Chain.{Block, Data, Hash, Transaction, Gas}
 
   @typep tolar_formatted_address_hash :: String.t()
@@ -331,7 +330,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   defp blockchain_info() do
     %{
-      confirmed_blocks_count: BlockCache.estimated_count(),
+      confirmed_blocks_count: Chain.fetch_count_consensus_blocks(),
       total_blocks_count: Chain.block_count(),
       last_confirmed_block_hash: Chain.fetch_latest_block_hash()
     }
