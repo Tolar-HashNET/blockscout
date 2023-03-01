@@ -4,21 +4,24 @@ defmodule Explorer.EthRPC.TolarHashnet do
   """
   alias Explorer.Chain
   alias Explorer.Chain.Cache.Block, as: BlockCache
-  alias Explorer.Chain.{Block, Data, Hash, Transaction, Wei, Gas}
+  alias Explorer.Chain.{Block, Data, Hash, Transaction, Gas}
 
   @typep tolar_formatted_address_hash :: String.t()
+  @typep unprefixed_hash :: String.t()
+  @typep error :: String.t()
+  @typep topic :: String.t() | nil
 
   @typep tol_block_response :: %{
-           required(:block_hash) => Hash.t(),
-           required(:previous_block_hash) => Hash.t(),
+           required(:block_hash) => unprefixed_hash(),
+           required(:previous_block_hash) => unprefixed_hash(),
            required(:block_index) => EthereumJSONRPC.block_number(),
            required(:confirmation_timestamp) => non_neg_integer(),
-           required(:transaction_hashes) => [Hash.t()]
+           required(:transaction_hashes) => [unprefixed_hash()]
          }
 
   @typep transaction_response :: %{
-           required(:transaction_hash) => Hash.t(),
-           required(:block_hash) => Hash.t(),
+           required(:transaction_hash) => unprefixed_hash(),
+           required(:block_hash) => unprefixed_hash(),
            required(:transaction_index) => Transaction.transaction_index(),
            required(:sender_address) => tolar_formatted_address_hash,
            required(:receiver_address) => tolar_formatted_address_hash,
@@ -38,8 +41,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
          }
 
   @typep transaction_receipt_response :: %{
-           required(:hash) => Hash.t(),
-           required(:block_hash) => Hash.t(),
+           required(:hash) => unprefixed_hash(),
+           required(:block_hash) => unprefixed_hash(),
            required(:transaction_index) => Transaction.transaction_index(),
            required(:sender_address) => tolar_formatted_address_hash(),
            required(:receiver_address) => tolar_formatted_address_hash(),
@@ -57,8 +60,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
            required(:topic_arg_1) => topic(),
            required(:topic_arg_2) => topic(),
            required(:data) => Data.t(),
-           required(:transaction_hash) => Hash.t(),
-           required(:block_hash) => Hash.t(),
+           required(:transaction_hash) => unprefixed_hash(),
+           required(:block_hash) => unprefixed_hash(),
            required(:block_index) => EthereumJSONRPC.block_number()
          }
 
@@ -67,10 +70,6 @@ defmodule Explorer.EthRPC.TolarHashnet do
            topics: [String.t()],
            data: String.t()
          }
-
-  @typep error :: String.t()
-
-  @typep topic :: String.t() | nil
 
   @spec tol_get_block_by_hash(String.t()) :: {:ok, tol_block_response()} | {:error, error()}
   def tol_get_block_by_hash(block_hash) when is_binary(block_hash) do
@@ -110,7 +109,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_transaction(String.t()) :: {:ok, transaction_response()} | {:error, error()}
   def tol_get_transaction(transaction_hash) do
-    with normalized_hash <- normalize_transaction_hash(transaction_hash),
+    with normalized_hash <- prefix_hash(transaction_hash),
          {:ok, parsed_tx_hash} <- validate_full_hash(normalized_hash),
          %Transaction{} = transaction <- Chain.fetch_transaction_by_hash(parsed_tx_hash) do
       {:ok, build_transaction_response(transaction)}
@@ -125,7 +124,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_transaction_receipt(String.t()) :: {:ok, transaction_receipt_response()} | {:error, error()}
   def tol_get_transaction_receipt(transaction_hash) do
-    with normalized_hash <- normalize_transaction_hash(transaction_hash),
+    with normalized_hash <- prefix_hash(transaction_hash),
          {:ok, tx_hash} <- validate_full_hash(normalized_hash),
          %Transaction{} = transaction <-
            Chain.fetch_transaction_by_hash(tx_hash, [:block, :from_address, :to_address, :logs]) do
@@ -240,12 +239,19 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end)
   end
 
+  @spec unprefixed_hash(Hash.t()) :: unprefixed_hash()
+  def unprefixed_hash(%Hash{} = hash) do
+    [_, unprefixed] = Hash.to_iodata(hash)
+
+    unprefixed
+  end
+
   defp build_block_response(block) do
-    transaction_hashes = Enum.map(block.transactions, & &1.hash)
+    transaction_hashes = Enum.map(block.transactions, & unprefixed_hash(&1.hash))
 
     %{
-      block_hash: block.hash,
-      previous_block_hash: block.parent_hash,
+      block_hash: unprefixed_hash(block.hash),
+      previous_block_hash: unprefixed_hash(block.parent_hash),
       block_index: block.number,
       confirmation_timestamp: DateTime.to_unix(block.timestamp, :millisecond),
       transaction_hashes: transaction_hashes
@@ -254,8 +260,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   defp build_transaction_response(transaction) do
     %{
-      transaction_hash: transaction.hash,
-      block_hash: transaction.block_hash,
+      transaction_hash: unprefixed_hash(transaction.hash),
+      block_hash: unprefixed_hash(transaction.block_hash),
       transaction_index: transaction.index,
       sender_address: eth_address_to_tolar(transaction.from_address.hash),
       receiver_address: eth_address_to_tolar(transaction.to_address.hash),
@@ -277,8 +283,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   defp build_transaction_receipt_response(transaction) do
     %{
-      hash: transaction.hash,
-      block_hash: transaction.block_hash,
+      hash: unprefixed_hash(transaction.hash),
+      block_hash: unprefixed_hash(transaction.block_hash),
       block_number: transaction.block_number,
       transaction_index: transaction.index,
       sender_address: eth_address_to_tolar(transaction.from_address.hash),
@@ -292,10 +298,15 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   defp build_logs(transaction) do
     Enum.map(transaction.logs, fn log ->
+      topics =
+        [log.first_topic, log.second_topic, log.third_topic, log.fourth_topic]
+        |> Enum.map(&unprefixed_binary/1)
+        |> Enum.reject(&is_nil/1)
+
       %{
         address: eth_address_to_tolar(log.address_hash),
-        topics: Enum.reject([log.first_topic, log.second_topic, log.third_topic, log.fourth_topic], &is_nil/1),
-        data: log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
+        topics: topics,
+        data: unprefixed_data(log.data)
       }
     end)
   end
@@ -304,13 +315,13 @@ defmodule Explorer.EthRPC.TolarHashnet do
     Enum.map(logs, fn log ->
       %{
         address: eth_address_to_tolar(log.address_hash),
-        topic: log.first_topic,
-        topic_arg_0: log.second_topic,
-        topic_arg_1: log.third_topic,
-        topic_arg_2: log.fourth_topic,
-        data: log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary(),
-        transaction_hash: log.transaction_hash,
-        block_hash: log.block_hash,
+        topic: unprefixed_binary(log.first_topic),
+        topic_arg_0: unprefixed_binary(log.second_topic),
+        topic_arg_1: unprefixed_binary(log.third_topic),
+        topic_arg_2: unprefixed_binary(log.fourth_topic),
+        data: unprefixed_data(log.data),
+        transaction_hash: unprefixed_hash(log.transaction_hash),
+        block_hash: unprefixed_hash(log.block_hash),
         block_index: log.block_number
       }
     end)
@@ -333,7 +344,18 @@ defmodule Explorer.EthRPC.TolarHashnet do
     Hash.Full.cast(transaction_hash)
   end
 
-  defp normalize_transaction_hash("0x" <> tx_hash), do: "0x" <> tx_hash
+  defp prefix_hash("0x" <> tx_hash), do: "0x" <> tx_hash
 
-  defp normalize_transaction_hash(tx_hash), do: "0x" <> tx_hash
+  defp prefix_hash(tx_hash), do: "0x" <> tx_hash
+
+  defp unprefixed_binary(nil), do: nil
+
+  defp unprefixed_binary("0x" <> unprefixed), do: unprefixed
+
+  defp unprefixed_data(%Data{} = data) do
+    [_, unprefixed] = Explorer.Chain.Data.to_iodata(data)
+
+    unprefixed
+  end
 end
+
