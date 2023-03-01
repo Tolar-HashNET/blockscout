@@ -242,7 +242,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   def unprefixed_hash(%Hash{} = hash) do
     [_, unprefixed] = Hash.to_iodata(hash)
 
-    unprefixed
+    IO.iodata_to_binary(unprefixed)
   end
 
   defp build_block_response(block) do
@@ -358,7 +358,6 @@ defmodule Explorer.EthRPC.TolarHashnet do
   defp unprefixed_data(%Data{} = data) do
     [_, unprefixed] = Explorer.Chain.Data.to_iodata(data)
 
-    unprefixed
+    IO.iodata_to_binary(unprefixed)
   end
 end
-
