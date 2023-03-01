@@ -7,6 +7,7 @@ defmodule Explorer.Chain.Cache.Block do
     only: [
       from: 2
     ]
+  @default_cache_period :timer.hours(2)
 
   use Explorer.Chain.MapCache,
     name: :block_count,

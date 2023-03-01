@@ -3,7 +3,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   JsonRPC methods handling for Tolar hashnet
   """
   alias Explorer.Chain
-  alias Explorer.Chain.{Block, Data, Hash, Transaction, Gas}
+  alias Explorer.Chain.{Address, Block, Data, Hash, Transaction, Gas}
 
   @typep tolar_formatted_address_hash :: String.t()
   @typep unprefixed_hash :: String.t()
@@ -262,8 +262,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
       transaction_hash: unprefixed_hash(transaction.hash),
       block_hash: unprefixed_hash(transaction.block_hash),
       transaction_index: transaction.index,
-      sender_address: eth_address_to_tolar(transaction.from_address.hash),
-      receiver_address: eth_address_to_tolar(transaction.to_address.hash),
+      sender_address: safe_eth_to_tolar(transaction.from_address),
+      receiver_address: safe_eth_to_tolar(transaction.to_address),
       value: Decimal.to_string(transaction.value.value),
       gas: transaction.gas,
       gas_price: Decimal.to_string(transaction.gas_price.value),
@@ -286,8 +286,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
       block_hash: unprefixed_hash(transaction.block_hash),
       block_number: transaction.block_number,
       transaction_index: transaction.index,
-      sender_address: eth_address_to_tolar(transaction.from_address.hash),
-      receiver_address: eth_address_to_tolar(transaction.to_address.hash),
+      sender_address: safe_eth_to_tolar(transaction.from_address),
+      receiver_address: safe_eth_to_tolar(transaction.to_address),
       new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       gas_used: transaction.gas_used,
       excepted: transaction.has_error_in_internal_txs,
@@ -342,6 +342,10 @@ defmodule Explorer.EthRPC.TolarHashnet do
   defp validate_full_hash(transaction_hash) do
     Hash.Full.cast(transaction_hash)
   end
+
+  defp safe_eth_to_tolar(nil), do: nil
+
+  defp safe_eth_to_tolar(%Address{hash: hash}), do: eth_address_to_tolar(hash)
 
   defp prefix_hash("0x" <> tx_hash), do: "0x" <> tx_hash
 
