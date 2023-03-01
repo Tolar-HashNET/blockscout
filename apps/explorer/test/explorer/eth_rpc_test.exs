@@ -77,17 +77,20 @@ defmodule Explorer.EthRPCTest do
     } do
       request = build_request("tol_getBlockByHash", %{"block_hash" => hash_binary_representation})
 
-      transaction_hashes = Enum.map(transactions, & &1.hash)
+      transaction_hashes = Enum.map(transactions, & unprefixed_hash(&1.hash))
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+
+      unprefixed_block_hash = unprefixed_hash(block_hash)
+      unprefixed_prev_block_hash = unprefixed_hash(prev_block_hash)
 
       assert [
                %{
                  id: 1,
                  result: %{
                    block_index: ^number,
-                   block_hash: ^block_hash,
+                   block_hash: ^unprefixed_block_hash,
                    confirmation_timestamp: ^confirmation_timestamp,
-                   previous_block_hash: ^prev_block_hash,
+                   previous_block_hash: ^unprefixed_prev_block_hash,
                    transaction_hashes: ^transaction_hashes
                  }
                }
@@ -138,17 +141,20 @@ defmodule Explorer.EthRPCTest do
     } do
       request = build_request("tol_getBlockByIndex", %{"block_index" => block_index})
 
-      transaction_hashes = Enum.map(transactions, & &1.hash)
+      transaction_hashes = Enum.map(transactions, & unprefixed_hash(&1.hash))
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+
+      unprefixed_block_hash = unprefixed_hash(block_hash)
+      unprefixed_perv_block_hash = unprefixed_hash(prev_block_hash)
 
       assert [
                %{
                  id: 1,
                  result: %{
                    block_index: ^block_index,
-                   block_hash: ^block_hash,
+                   block_hash: ^unprefixed_block_hash,
                    confirmation_timestamp: ^confirmation_timestamp,
-                   previous_block_hash: ^prev_block_hash,
+                   previous_block_hash: ^unprefixed_perv_block_hash,
                    transaction_hashes: ^transaction_hashes
                  }
                }
@@ -200,17 +206,20 @@ defmodule Explorer.EthRPCTest do
     } do
       request = build_request("tol_getLatestBlock")
 
-      transaction_hashes = Enum.map(transactions, & &1.hash)
+      transaction_hashes = Enum.map(transactions, & unprefixed_hash(&1.hash))
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
+
+      unprefixed_block_hash = unprefixed_hash(block_hash)
+      unprefixed_perv_block_hash = unprefixed_hash(prev_block_hash)
 
       assert [
                %{
                  id: 1,
                  result: %{
                    block_index: ^block_index,
-                   block_hash: ^block_hash,
+                   block_hash: ^unprefixed_block_hash,
                    confirmation_timestamp: ^confirmation_timestamp,
-                   previous_block_hash: ^prev_block_hash,
+                   previous_block_hash: ^unprefixed_perv_block_hash,
                    transaction_hashes: ^transaction_hashes
                  }
                }
@@ -278,6 +287,9 @@ defmodule Explorer.EthRPCTest do
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
       string_value = Decimal.to_string(value.value)
       gas_price_string = Decimal.to_string(gas_price.value)
+      
+      unprefixed_tx_hash = unprefixed_hash(hash)
+      unprefixed_block_hash = unprefixed_hash(block_hash)
 
       assert [
                %{
@@ -286,10 +298,10 @@ defmodule Explorer.EthRPCTest do
                    sender_address: resp_from,
                    receiver_address: resp_to,
                    new_address: "54000000000000000000000000000000000000000023199e2b",
-                   transaction_hash: ^hash,
+                   transaction_hash: ^unprefixed_tx_hash,
                    transaction_index: ^index,
                    value: ^string_value,
-                   block_hash: ^block_hash,
+                   block_hash: ^unprefixed_block_hash,
                    gas: ^gas,
                    gas_price: ^gas_price_string,
                    nonce: ^nonce,
@@ -387,6 +399,8 @@ defmodule Explorer.EthRPCTest do
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
       string_value = Decimal.to_string(value.value)
       string_gas_price = Decimal.to_string(gas_price.value)
+      unprefixed_tx_hash = unprefixed_hash(hash)
+      unprefixed_block_hash = unprefixed_hash(block_hash)
 
       assert [
                %{
@@ -396,10 +410,10 @@ defmodule Explorer.EthRPCTest do
                      sender_address: resp_from,
                      receiver_address: resp_to,
                      new_address: "54000000000000000000000000000000000000000023199e2b",
-                     transaction_hash: ^hash,
+                     transaction_hash: ^unprefixed_tx_hash,
                      transaction_index: ^index,
                      value: ^string_value,
-                     block_hash: ^block_hash,
+                     block_hash: ^unprefixed_block_hash,
                      gas: ^gas,
                      gas_price: ^string_gas_price,
                      nonce: ^nonce,
@@ -466,7 +480,7 @@ defmodule Explorer.EthRPCTest do
 
       [%{id: 1, result: [result_first_transaction | _]}] = EthRPC.responses([request])
 
-      assert third_most_recent.hash === result_first_transaction.transaction_hash
+      assert unprefixed_hash(third_most_recent.hash) === result_first_transaction.transaction_hash
     end
   end
 
@@ -530,12 +544,15 @@ defmodule Explorer.EthRPCTest do
         created_contract_address_hash: new_address
       } = transaction
 
+      unprefixed_block_hash = unprefixed_hash(block_hash)
+      unprefixed_tx_hash = unprefixed_hash(tx_hash)
+
       assert [
                %{
                  id: 1,
                  result: %{
-                   block_hash: ^block_hash,
-                   hash: ^tx_hash,
+                   block_hash: ^unprefixed_block_hash,
+                   hash: ^unprefixed_tx_hash,
                    transaction_index: ^tx_index,
                    sender_address: sender_address,
                    receiver_address: receiver_address,
@@ -553,8 +570,9 @@ defmodule Explorer.EthRPCTest do
       assert_tol_address(new_address)
 
       assert_tol_address(log.address)
-      assert log.data == first_log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
-      assert log.topics == ["0x00", "0x01"]
+      "0x" <> log_data = first_log.data |> Explorer.Chain.Data.to_iodata() |> IO.iodata_to_binary()
+      assert log.data == log_data
+      assert log.topics == ["00", "01"]
     end
 
     test "parses raw string transaction address correctly with 0x prefix" do
@@ -646,10 +664,10 @@ defmodule Explorer.EthRPCTest do
                    past_events: [
                      %{
                        address: address,
-                       topic: "0x01",
-                       topic_arg_0: "0x02",
-                       topic_arg_1: "0x03",
-                       topic_arg_2: "0x04",
+                       topic: "01",
+                       topic_arg_0: "02",
+                       topic_arg_1: "03",
+                       topic_arg_2: "04",
                        block_index: 0
                      }
                    ]
@@ -677,4 +695,6 @@ defmodule Explorer.EthRPCTest do
     |> Explorer.Chain.Hash.to_iodata()
     |> IO.iodata_to_binary()
   end
+
+  defp unprefixed_hash(hash), do: Explorer.EthRPC.TolarHashnet.unprefixed_hash(hash)
 end
