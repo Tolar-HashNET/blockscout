@@ -46,7 +46,8 @@ defmodule BlockScoutWeb.API.EthRPC.EthController do
                {:ok, decoded} <- Jason.decode(single_key) do
             decoded
           else
-            _ -> request
+            _ ->
+              try_to_parse_as_normal_request(conn, request)
           end
 
         [response] = EthRPC.responses([decoded_request])
@@ -58,6 +59,16 @@ defmodule BlockScoutWeb.API.EthRPC.EthController do
 
       :rate_limit_reached ->
         AccessHelpers.handle_rate_limit_deny(conn)
+    end
+  end
+
+  defp try_to_parse_as_normal_request(conn, request) do
+    with {:ok, %{"method" => "tol_" <> _} = body, _} <- Plug.Conn.read_body(conn),
+         {:ok, decoded_request} <- Jason.decode(body) do
+      decoded_request
+    else
+      _ ->
+        request
     end
   end
 end
