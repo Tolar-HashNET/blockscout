@@ -5,11 +5,6 @@ defmodule Explorer.Chain.Cache.Block do
 
   @default_cache_period :timer.hours(2)
 
-  import Ecto.Query,
-    only: [
-      from: 2
-    ]
-
   use Explorer.Chain.MapCache,
     name: :block_count,
     key: :count,
@@ -21,7 +16,6 @@ defmodule Explorer.Chain.Cache.Block do
   require Logger
 
   alias Explorer.Chain
-  alias Explorer.Chain.Block
   alias Explorer.Repo
 
   @doc """
