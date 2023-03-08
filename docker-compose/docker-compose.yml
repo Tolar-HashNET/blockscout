@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   db:
+    platform: linux/amd64
     image: postgres:14
     restart: always
     container_name: 'postgres'
@@ -13,14 +14,15 @@ services:
       - 7432:5432
 
   blockscout:
+    platform: linux/amd64
     depends_on:
       - db
-    image: blockscout/blockscout:${DOCKER_TAG:-latest}
+    image: gcr.io/tolar-devops-311210/tolar-blockscout:latest
     build:
       context: ..
       dockerfile: ./docker/Dockerfile
       args:
-        COIN: ""
+        COIN: "tolar"
         CACHE_EXCHANGE_RATES_PERIOD: ""
         DISABLE_READ_API: "false"
         API_PATH: "/"
