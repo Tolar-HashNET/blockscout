@@ -12,6 +12,7 @@ services:
       service: db
 
   blockscout:
+    platform: linux/amd64
     depends_on:
       - db
       - smart-contract-verifier
