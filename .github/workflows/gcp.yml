@@ -20,9 +20,6 @@ jobs:
         with:
           repository: Tolar-HashNET/blockscout
           ref: tolar_master
-          
-      - name: my-step
-        run: pwd
         
       - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
         with:
@@ -34,4 +31,3 @@ jobs:
           dockerfile: ./docker/Dockerfile
           context: .
           build_args: COIN=tolar
-          platform: linux/amd64
