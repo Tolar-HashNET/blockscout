@@ -34,3 +34,4 @@ jobs:
           dockerfile: ./docker/Dockerfile
           context: .
           build_args: COIN=tolar
+          platform: linux/amd64
