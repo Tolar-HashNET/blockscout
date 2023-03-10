@@ -65,11 +65,14 @@ RUN mkdir -p /opt/release \
 ##############################################################
 FROM bitwalker/alpine-elixir-phoenix:1.14
 
+<<<<<<< HEAD
 ARG RELEASE_VERSION
 ENV RELEASE_VERSION=${RELEASE_VERSION}
 ARG BLOCKSCOUT_VERSION
 ENV BLOCKSCOUT_VERSION=${BLOCKSCOUT_VERSION}
 
+=======
+>>>>>>> 99b3976971 (Update Dockerfile)
 RUN apk --no-cache --update add jq
 
 WORKDIR /app
@@ -77,5 +80,8 @@ WORKDIR /app
 COPY --from=builder /opt/release/blockscout .
 COPY --from=builder /app/apps/explorer/node_modules ./node_modules
 COPY --from=builder /app/config/config_helper.exs ./config/config_helper.exs
+<<<<<<< HEAD
 COPY --from=builder /app/config/config_helper.exs /app/releases/${RELEASE_VERSION}/config_helper.exs
 
+=======
+>>>>>>> 99b3976971 (Update Dockerfile)
