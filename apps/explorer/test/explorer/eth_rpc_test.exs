@@ -77,7 +77,7 @@ defmodule Explorer.EthRPCTest do
     } do
       request = build_request("tol_getBlockByHash", %{"block_hash" => hash_binary_representation})
 
-      transaction_hashes = Enum.map(transactions, & unprefixed_hash(&1.hash))
+      transaction_hashes = Enum.map(transactions, &unprefixed_hash(&1.hash))
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
 
       unprefixed_block_hash = unprefixed_hash(block_hash)
@@ -141,7 +141,7 @@ defmodule Explorer.EthRPCTest do
     } do
       request = build_request("tol_getBlockByIndex", %{"block_index" => block_index})
 
-      transaction_hashes = Enum.map(transactions, & unprefixed_hash(&1.hash))
+      transaction_hashes = Enum.map(transactions, &unprefixed_hash(&1.hash))
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
 
       unprefixed_block_hash = unprefixed_hash(block_hash)
@@ -206,7 +206,7 @@ defmodule Explorer.EthRPCTest do
     } do
       request = build_request("tol_getLatestBlock")
 
-      transaction_hashes = Enum.map(transactions, & unprefixed_hash(&1.hash))
+      transaction_hashes = Enum.map(transactions, &unprefixed_hash(&1.hash))
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
 
       unprefixed_block_hash = unprefixed_hash(block_hash)
@@ -287,7 +287,7 @@ defmodule Explorer.EthRPCTest do
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
       string_value = Decimal.to_string(value.value)
       gas_price_string = Decimal.to_string(gas_price.value)
-      
+
       unprefixed_tx_hash = unprefixed_hash(hash)
       unprefixed_block_hash = unprefixed_hash(block_hash)
 

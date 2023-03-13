@@ -72,10 +72,10 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_block_by_hash(String.t()) :: {:ok, tol_block_response()} | {:error, error()}
   def tol_get_block_by_hash(block_hash) when is_binary(block_hash) do
-    case Chain.fetch_block_by_hash(block_hash, [:transactions]) do
-      %Block{} = block ->
-        {:ok, build_block_response(block)}
-
+    with normalized_hash <- prefix_hash(block_hash),
+         %Block{} = block <- Chain.fetch_block_by_hash(normalized_hash, [:transactions]) do
+      {:ok, build_block_response(block)}
+    else
       _ ->
         {:error, "Block not found"}
     end
@@ -246,7 +246,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   end
 
   defp build_block_response(block) do
-    transaction_hashes = Enum.map(block.transactions, & unprefixed_hash(&1.hash))
+    transaction_hashes = Enum.map(block.transactions, &unprefixed_hash(&1.hash))
 
     %{
       block_hash: unprefixed_hash(block.hash),
