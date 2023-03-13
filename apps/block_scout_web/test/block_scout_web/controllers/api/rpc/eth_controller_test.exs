@@ -587,7 +587,33 @@ defmodule BlockScoutWeb.API.RPC.EthControllerTest do
     end
 
     test "works", %{conn: conn, api_params: api_params} do
-      params = params(api_params, [%{"addresses" => [], "limit" => 1000, "skip" => 0}])
+      params = params(api_params, %{"addresses" => [], "limit" => 1000, "skip" => 0})
+
+      assert response =
+               conn
+               |> post("/api/eth-rpc", params)
+               |> json_response(200)
+    end
+  end
+
+  describe "tol_getBlockByHash" do
+    setup do
+      %{
+        api_params: %{
+          "method" => "tol_getBlockByHash",
+          "jsonrpc" => "2.0",
+          "id" => 1
+        }
+      }
+    end
+
+    test "with existing block return block info correctly", %{conn: conn, api_params: api_params} do
+      {:ok, block_hash} =
+        Explorer.Chain.Hash.Full.cast("0x9b206cd936025c600c2a37c2290a5b6c9e827760dfaa94487148e257e6c60c7d")
+
+      insert(:block, hash: block_hash)
+
+      params = params(api_params, %{"block_hash" => "9b206cd936025c600c2a37c2290a5b6c9e827760dfaa94487148e257e6c60c7d"})
 
       assert response =
                conn
