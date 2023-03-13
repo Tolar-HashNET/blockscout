@@ -3,10 +3,10 @@ name: Blockscout
 on:
   push:
     branches:
-      - master
+      - tolar_master
   pull_request:
     branches:
-      - master
+      - tolar_master
 
 env:
   MIX_ENV: test
