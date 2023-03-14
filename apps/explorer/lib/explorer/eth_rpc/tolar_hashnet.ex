@@ -332,6 +332,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @zero_address "54000000000000000000000000000000000000000023199e2b"
 
+  def zero_address(), do: @zero_address
+
   defp blockchain_info() do
     %{
       confirmed_blocks_count: Chain.fetch_count_consensus_blocks(),
@@ -347,7 +349,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
     Hash.Full.cast(transaction_hash)
   end
 
-  defp safe_eth_to_tolar(nil), do: nil
+  defp safe_eth_to_tolar(nil), do: @zero_address
 
   defp safe_eth_to_tolar(%Address{hash: hash}), do: eth_address_to_tolar(hash)
 
