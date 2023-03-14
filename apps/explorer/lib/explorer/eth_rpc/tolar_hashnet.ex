@@ -27,7 +27,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
            required(:value) => String.t(),
            required(:gas) => Gas.t(),
            required(:gas_price) => String.t(),
-           required(:nonce) => non_neg_integer(),
+           required(:nonce) => String.t(),
            required(:data) => Data.t(),
            required(:gas_used) => Gas.t() | nil,
            required(:confirmation_timestamp) => non_neg_integer(),
@@ -73,9 +73,13 @@ defmodule Explorer.EthRPC.TolarHashnet do
   @spec tol_get_block_by_hash(String.t()) :: {:ok, tol_block_response()} | {:error, error()}
   def tol_get_block_by_hash(block_hash) when is_binary(block_hash) do
     with normalized_hash <- prefix_hash(block_hash),
-         %Block{} = block <- Chain.fetch_block_by_hash(normalized_hash, [:transactions]) do
+         {:ok, parsed_hash} <- validate_full_hash(normalized_hash),
+         %Block{} = block <- Chain.fetch_block_by_hash(parsed_hash, [:transactions]) do
       {:ok, build_block_response(block)}
     else
+      :error ->
+        {:error, "Invalid block hash"}
+
       _ ->
         {:error, "Block not found"}
     end
@@ -267,7 +271,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
       value: Decimal.to_string(transaction.value.value),
       gas: transaction.gas,
       gas_price: Decimal.to_string(transaction.gas_price.value),
-      nonce: transaction.nonce,
+      nonce: Integer.to_string(transaction.nonce),
       data: transaction.input,
       gas_used: transaction.gas_used,
       exception: transaction.error,
