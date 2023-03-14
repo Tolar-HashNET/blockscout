@@ -19,6 +19,8 @@ defmodule Explorer.EthRPCTest do
   alias Explorer.Chain.Transaction
   alias Explorer.Chain.Hash
 
+  alias Explorer.EthRPC.TolarHashnet
+
   @json_rpc_2_request %{"jsonrpc" => "2.0", "id" => 1}
 
   describe "eth_address_to_tolar/1" do
@@ -26,18 +28,17 @@ defmodule Explorer.EthRPCTest do
       tx_example_hash = "0000000000000000000000000000000000000000"
       {:ok, hash} = Explorer.Chain.Hash.Address.cast("0x" <> tx_example_hash)
 
-      assert Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(hash) ===
-               "54000000000000000000000000000000000000000023199e2b"
+      assert TolarHashnet.eth_address_to_tolar(hash) === TolarHashnet.zero_address()
     end
   end
 
   describe "tolar_address_to_eth/1" do
     test "converts tolar address to eth format correctly for zero address" do
-      tolar_address = "54000000000000000000000000000000000000000023199e2b"
+      zero_address = TolarHashnet.zero_address()
 
       assert {:ok,
               %Hash{byte_count: 20, bytes: <<0x0000000000000000000000000000000000000000::big-integer-size(20)-unit(8)>>}} ===
-               Explorer.EthRPC.TolarHashnet.tolar_address_to_eth(tolar_address)
+              TolarHashnet.tolar_address_to_eth(zero_address)
     end
 
     test "convers arbitrary tolar address to eth format correctly" do
@@ -291,6 +292,7 @@ defmodule Explorer.EthRPCTest do
       unprefixed_tx_hash = unprefixed_hash(hash)
       unprefixed_block_hash = unprefixed_hash(block_hash)
       nonce = Integer.to_string(nonce)
+      zero_address = TolarHashnet.zero_address()
 
       assert [
                %{
@@ -298,7 +300,7 @@ defmodule Explorer.EthRPCTest do
                  result: %{
                    sender_address: resp_from,
                    receiver_address: resp_to,
-                   new_address: "54000000000000000000000000000000000000000023199e2b",
+                   new_address: ^zero_address,
                    transaction_hash: ^unprefixed_tx_hash,
                    transaction_index: ^index,
                    value: ^string_value,
@@ -345,6 +347,15 @@ defmodule Explorer.EthRPCTest do
         })
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
+    end
+
+    test "with receiver address nil - returns zero address", %{block: block} do
+      no_receiver = transaction = insert(:transaction, hash: transaction_hash(), to_address: nil) |> with_block(block)
+      transaction_hash_binary_representation = hash_to_binary(no_receiver.hash)
+      request = build_request("tol_getTransaction", %{"transaction_hash" => transaction_hash_binary_representation})
+      zero_address = TolarHashnet.zero_address()
+
+      assert [%{id: 1, result: %{receiver_address: ^zero_address}}] = EthRPC.responses([request])
     end
 
     test "with excepted transaction returns excepted field as true", %{block: block} do
@@ -411,6 +422,7 @@ defmodule Explorer.EthRPCTest do
       unprefixed_tx_hash = unprefixed_hash(hash)
       unprefixed_block_hash = unprefixed_hash(block_hash)
       nonce = Integer.to_string(nonce)
+      zero_address = TolarHashnet.zero_address()
 
       assert [
                %{
@@ -419,7 +431,7 @@ defmodule Explorer.EthRPCTest do
                    %{
                      sender_address: resp_from,
                      receiver_address: resp_to,
-                     new_address: "54000000000000000000000000000000000000000023199e2b",
+                     new_address: ^zero_address,
                      transaction_hash: ^unprefixed_tx_hash,
                      transaction_index: ^index,
                      value: ^string_value,
@@ -442,7 +454,7 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "with existing tx_hashes return matched transactions", %{from_address_hash: from_address_hash} do
-      tolar_format_address = Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)
+      tolar_format_address = TolarHashnet.eth_address_to_tolar(from_address_hash)
 
       request =
         build_request("tol_getTransactionList", %{"addresses" => [tolar_format_address], "limit" => 10, "skip" => 0})
@@ -456,7 +468,7 @@ defmodule Explorer.EthRPCTest do
       from_address: from_address
     } do
       limit = 4
-      tolar_format_address = Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)
+      tolar_format_address = TolarHashnet.eth_address_to_tolar(from_address_hash)
 
       params = %{"addresses" => [tolar_format_address], "limit" => limit, "skip" => 0}
 
@@ -477,7 +489,7 @@ defmodule Explorer.EthRPCTest do
       skip = 2
 
       params = %{
-        "addresses" => [Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(from_address_hash)],
+        "addresses" => [TolarHashnet.eth_address_to_tolar(from_address_hash)],
         "limit" => limit,
         "skip" => skip
       }
@@ -653,7 +665,7 @@ defmodule Explorer.EthRPCTest do
         second_topic: "0x02"
       )
 
-      %{tol_address: Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(address.hash)}
+      %{tol_address: TolarHashnet.eth_address_to_tolar(address.hash)}
     end
 
     test "returns all logs without topic provided", %{tol_address: tol_address} do
@@ -710,5 +722,5 @@ defmodule Explorer.EthRPCTest do
     |> IO.iodata_to_binary()
   end
 
-  defp unprefixed_hash(hash), do: Explorer.EthRPC.TolarHashnet.unprefixed_hash(hash)
+  defp unprefixed_hash(hash), do: TolarHashnet.unprefixed_hash(hash)
 end
