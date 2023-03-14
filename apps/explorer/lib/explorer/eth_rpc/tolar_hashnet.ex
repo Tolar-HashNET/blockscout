@@ -166,7 +166,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @spec tol_get_past_events(tolar_formatted_address_hash(), topic()) ::
           {:ok, %{past_events: past_events_response()}} | {:error, error()}
-  def tol_get_past_events(address, topic) when is_binary(topic) do
+  def tol_get_past_events(address, topic) when is_binary(topic) and topic != "" do
     {:ok, eth_address} = tolar_address_to_eth(address)
     formatted_topic = if String.starts_with?(topic, "0x"), do: topic, else: "0x" <> topic
 
@@ -179,7 +179,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
     end
   end
 
-  def tol_get_past_events(address, nil) do
+  def tol_get_past_events(address, _) do
     {:ok, eth_address} = tolar_address_to_eth(address)
 
     case Chain.tol_address_to_logs(eth_address) do

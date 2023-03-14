@@ -290,6 +290,7 @@ defmodule Explorer.EthRPCTest do
 
       unprefixed_tx_hash = unprefixed_hash(hash)
       unprefixed_block_hash = unprefixed_hash(block_hash)
+      nonce = Integer.to_string(nonce)
 
       assert [
                %{
@@ -401,6 +402,7 @@ defmodule Explorer.EthRPCTest do
       string_gas_price = Decimal.to_string(gas_price.value)
       unprefixed_tx_hash = unprefixed_hash(hash)
       unprefixed_block_hash = unprefixed_hash(block_hash)
+      nonce = Integer.to_string(nonce)
 
       assert [
                %{
@@ -647,9 +649,13 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "returns all logs without topic provided", %{tol_address: tol_address} do
-      request = build_request("tol_getPastEvents", %{"address" => tol_address, "topic" => nil})
+      request = build_request("tol_getPastEvents", %{"address" => tol_address, "topic" => ""})
 
       assert [%{id: 1, result: %{past_events: result}}] = EthRPC.responses([request])
+
+      assert Enum.count(result) == 2
+
+      request = build_request("tol_getPastEvents", %{"address" => tol_address, "topic" => nil})
 
       assert Enum.count(result) == 2
     end
