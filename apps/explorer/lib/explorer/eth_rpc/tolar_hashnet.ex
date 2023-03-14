@@ -275,7 +275,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
       data: transaction.input,
       gas_used: transaction.gas_used,
       exception: transaction.error,
-      excepted: transaction.has_error_in_internal_txs,
+      excepted: safe_bool(transaction.has_error_in_internal_txs),
       new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       confirmation_timestamp: DateTime.to_unix(transaction.block.timestamp, :millisecond),
       network_id: nil,
@@ -294,7 +294,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
       receiver_address: safe_eth_to_tolar(transaction.to_address),
       new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       gas_used: transaction.gas_used,
-      excepted: transaction.has_error_in_internal_txs,
+      excepted: safe_bool(transaction.has_error_in_internal_txs),
       logs: build_logs(transaction)
     }
   end
@@ -364,4 +364,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
     IO.iodata_to_binary(unprefixed)
   end
+
+  defp safe_bool(term) when is_boolean(term), do: term
+
+  defp safe_bool(_), do: false
 end
