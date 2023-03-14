@@ -309,7 +309,7 @@ defmodule Explorer.EthRPCTest do
                    data: ^data,
                    gas_used: ^gas_used,
                    exception: ^exception,
-                   excepted: ^excepted,
+                   excepted: false,
                    confirmation_timestamp: ^confirmation_timestamp,
                    network_id: nil,
                    output: nil,
@@ -345,6 +345,14 @@ defmodule Explorer.EthRPCTest do
         })
 
       assert [%{id: 1, error: "Transaction not found"}] == EthRPC.responses([request])
+    end
+
+    test "with excepted transaction returns excepted field as true", %{block: block} do
+      excepted_transaction = transaction = insert(:transaction, hash: transaction_hash(), has_error_in_internal_txs: true) |> with_block(block)
+      transaction_hash_binary_representation = hash_to_binary(excepted_transaction.hash)
+      request = build_request("tol_getTransaction", %{"transaction_hash" => transaction_hash_binary_representation})
+
+      assert [%{id: 1, result: %{excepted: true}}] = EthRPC.responses([request])
     end
   end
 
@@ -422,7 +430,7 @@ defmodule Explorer.EthRPCTest do
                      data: ^data,
                      gas_used: ^gas_used,
                      exception: ^exception,
-                     excepted: ^excepted,
+                     excepted: false,
                      confirmation_timestamp: ^confirmation_timestamp,
                      network_id: nil,
                      output: nil,
@@ -560,7 +568,7 @@ defmodule Explorer.EthRPCTest do
                    receiver_address: receiver_address,
                    gas_used: ^gas_used,
                    new_address: new_address,
-                   excepted: ^excepted,
+                   excepted: false,
                    block_number: ^block_num,
                    logs: [log | _]
                  }
