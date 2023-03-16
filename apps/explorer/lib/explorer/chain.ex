@@ -2205,7 +2205,7 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
-  def fetch_transaction_by_hash(transaction_hash, preloads \\ [:block, :from_address, :to_address]) do
+  def fetch_transaction_by_hash(transaction_hash, preloads \\ [:block, :from_address, :to_address, :internal_transactions]) do
     Transaction
     |> where([t], t.hash == ^transaction_hash)
     |> preload(^preloads)

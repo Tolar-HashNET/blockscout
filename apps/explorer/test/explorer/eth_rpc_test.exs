@@ -6,11 +6,13 @@ defmodule Explorer.EthRPCTest do
       transaction_hash: 0,
       block_hash: 0,
       with_block: 2,
+      with_block: 3,
       insert: 1,
       insert: 2,
       insert_list: 2,
       insert_list: 3,
-      build: 2
+      build: 2,
+      build: 1
     ]
 
   alias Explorer.EthRPC
@@ -38,7 +40,7 @@ defmodule Explorer.EthRPCTest do
 
       assert {:ok,
               %Hash{byte_count: 20, bytes: <<0x0000000000000000000000000000000000000000::big-integer-size(20)-unit(8)>>}} ===
-              TolarHashnet.tolar_address_to_eth(zero_address)
+               TolarHashnet.tolar_address_to_eth(zero_address)
     end
 
     test "convers arbitrary tolar address to eth format correctly" do
@@ -98,7 +100,7 @@ defmodule Explorer.EthRPCTest do
              ] = EthRPC.responses([request])
     end
 
-    test "with no data - return error", %{block: block} do
+    test "with no data - return error" do
       arbitrary_hash = block_hash() |> hash_to_binary()
       request = build_request("tol_getBlockByHash", %{"block_hash" => arbitrary_hash})
 
@@ -138,7 +140,6 @@ defmodule Explorer.EthRPCTest do
       block: %Block{hash: block_hash, number: block_index} = block,
       prev_block: %Block{hash: prev_block_hash},
       transactions: transactions,
-      hash_binary: hash_binary_representation
     } do
       request = build_request("tol_getBlockByIndex", %{"block_index" => block_index})
 
@@ -162,7 +163,7 @@ defmodule Explorer.EthRPCTest do
              ] = EthRPC.responses([request])
     end
 
-    test "with no data - return error", %{block: block} do
+    test "with no data - return error" do
       request = build_request("tol_getBlockByIndex", %{"block_index" => 1})
 
       assert [%{id: 1, error: "Block not found"}] = EthRPC.responses([request])
@@ -203,7 +204,6 @@ defmodule Explorer.EthRPCTest do
       block: %Block{hash: block_hash, number: block_index} = block,
       prev_block: %Block{hash: prev_block_hash},
       transactions: transactions,
-      hash_binary: hash_binary_representation
     } do
       request = build_request("tol_getLatestBlock")
 
@@ -256,8 +256,8 @@ defmodule Explorer.EthRPCTest do
   describe "tol_get_transaction/1" do
     setup do
       block_hash = block_hash()
-      block = insert(:block, hash: block_hash)
-      transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block)
+      block = insert(:block, hash: block_hash, consensus: true)
+      transaction = insert(:transaction, hash: transaction_hash(), index: nil) |> with_block(block, status: :ok)
 
       %{block: block, transaction: transaction}
     end
@@ -278,8 +278,6 @@ defmodule Explorer.EthRPCTest do
         nonce: nonce,
         input: data,
         gas_used: gas_used,
-        error: exception,
-        has_error_in_internal_txs: excepted,
         created_contract_address_hash: new_address,
         from_address: from,
         to_address: to
@@ -310,7 +308,7 @@ defmodule Explorer.EthRPCTest do
                    nonce: ^nonce,
                    data: ^data,
                    gas_used: ^gas_used,
-                   exception: ^exception,
+                   exception: 0,
                    excepted: false,
                    confirmation_timestamp: ^confirmation_timestamp,
                    network_id: nil,
@@ -359,7 +357,11 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "with excepted transaction returns excepted field as true", %{block: block} do
-      excepted_transaction = transaction = insert(:transaction, hash: transaction_hash(), has_error_in_internal_txs: true) |> with_block(block)
+      excepted_transaction =
+        insert(:transaction, hash: transaction_hash()) |> with_block(block, status: :error)
+      
+      internal_transaction = insert(:internal_transaction, transaction: excepted_transaction, error: "OutOfStack", index: 1, block_number: excepted_transaction.block_number, transaction_index: excepted_transaction.index, block_hash: excepted_transaction.block_hash, block_index: 1, gas_used: nil, output: nil)
+
       transaction_hash_binary_representation = hash_to_binary(excepted_transaction.hash)
       request = build_request("tol_getTransaction", %{"transaction_hash" => transaction_hash_binary_representation})
 
@@ -381,7 +383,7 @@ defmodule Explorer.EthRPCTest do
           from_address: from_address,
           to_address: build(:address, hash: to_address_hash)
         )
-        |> with_block(block)
+        |> with_block(block, status: :ok)
 
       %{block: block, transaction: transaction, from_address_hash: from_address_hash, from_address: from_address}
     end
@@ -409,7 +411,6 @@ defmodule Explorer.EthRPCTest do
         nonce: nonce,
         input: data,
         gas_used: gas_used,
-        error: exception,
         has_error_in_internal_txs: excepted,
         created_contract_address_hash: new_address,
         from_address: from,
@@ -441,7 +442,7 @@ defmodule Explorer.EthRPCTest do
                      nonce: ^nonce,
                      data: ^data,
                      gas_used: ^gas_used,
-                     exception: ^exception,
+                     exception: 0,
                      excepted: false,
                      confirmation_timestamp: ^confirmation_timestamp,
                      network_id: nil,
@@ -498,7 +499,7 @@ defmodule Explorer.EthRPCTest do
 
       [_, _, third_most_recent | _] =
         l =
-        insert_list(10, :transaction, from_address: from_address) |> Enum.map(&with_block(&1, block)) |> Enum.reverse()
+        insert_list(10, :transaction, from_address: from_address) |> Enum.map(&with_block(&1, block, status: :ok)) |> Enum.reverse()
 
       [%{id: 1, result: [result_first_transaction | _]}] = EthRPC.responses([request])
 
@@ -510,20 +511,12 @@ defmodule Explorer.EthRPCTest do
     setup do
       block_hash = block_hash()
       block = insert(:block, hash: block_hash)
-      transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block)
+      transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block, status: :ok)
 
       {:ok, from_address_hash} = Explorer.Chain.Hash.Address.cast("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5")
       {:ok, to_address_hash} = Explorer.Chain.Hash.Address.cast("0x8880bb98e7747f73b52a9cfA34DAb9A4A06afA38")
       from_address = insert(:address, hash: from_address_hash)
       to_address = insert(:address, hash: to_address_hash)
-
-      transaction =
-        insert(:transaction,
-          hash: transaction_hash(),
-          from_address: from_address,
-          to_address: to_address
-        )
-        |> with_block(block)
 
       log_1 =
         insert(:log,
@@ -562,7 +555,6 @@ defmodule Explorer.EthRPCTest do
         hash: tx_hash,
         index: tx_index,
         gas_used: gas_used,
-        has_error_in_internal_txs: excepted,
         created_contract_address_hash: new_address
       } = transaction
 
@@ -702,6 +694,32 @@ defmodule Explorer.EthRPCTest do
              ] = EthRPC.responses([request])
 
       assert_tol_address(address)
+    end
+  end
+
+  describe "excepted/1" do
+    test "with successfull transaction returns expected value" do
+      transaction = build(:transaction)
+
+      assert {false, 0} = TolarHashnet.exception(transaction)
+    end
+
+    test "with predefined error in transaction return expected value" do
+      error = "StackUnderflow"
+      transaction = build(:transaction, status: :error, error: error)
+
+      assert {true, error_code} = TolarHashnet.exception(transaction)
+
+      assert error_code === Map.get(TolarHashnet.errors_to_codes, error)
+    end
+
+    test "with transaction status :ok, but error in internal transaction return expected value" do
+      transaction = insert(:transaction, error: "OutOfStack", has_error_in_internal_txs: true) |> with_block(insert(:block, number: 1), status: :ok)
+      internal_transaction = insert(:internal_transaction, transaction: transaction, error: "OutOfStack", index: 1, block_number: transaction.block_number, transaction_index: transaction.index, block_hash: transaction.block_hash, block_index: 1, gas_used: nil, output: nil)
+
+      transaction = Explorer.Repo.preload(transaction, [:internal_transactions])
+
+      assert {true, 13} === TolarHashnet.exception(transaction)
     end
   end
 
