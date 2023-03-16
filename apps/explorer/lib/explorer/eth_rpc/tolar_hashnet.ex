@@ -130,7 +130,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
     with normalized_hash <- prefix_hash(transaction_hash),
          {:ok, tx_hash} <- validate_full_hash(normalized_hash),
          %Transaction{} = transaction <-
-           Chain.fetch_transaction_by_hash(tx_hash, [:block, :from_address, :to_address, :logs]) do
+           Chain.fetch_transaction_by_hash(tx_hash, [:block, :from_address, :to_address, :logs, :internal_transactions]) do
       {:ok, build_transaction_receipt_response(transaction)}
     else
       :error ->
@@ -262,6 +262,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
   end
 
   defp build_transaction_response(transaction) do
+    {excepted, exception} = exception(transaction)
+
     %{
       transaction_hash: unprefixed_hash(transaction.hash),
       block_hash: unprefixed_hash(transaction.block_hash),
@@ -274,8 +276,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
       nonce: Integer.to_string(transaction.nonce),
       data: transaction.input,
       gas_used: transaction.gas_used,
-      exception: transaction.error,
-      excepted: safe_bool(transaction.has_error_in_internal_txs),
+      excepted: excepted,
+      exception: exception,
       new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       confirmation_timestamp: DateTime.to_unix(transaction.block.timestamp, :millisecond),
       network_id: nil,
@@ -285,6 +287,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
   end
 
   defp build_transaction_receipt_response(transaction) do
+    {excepted, _} = exception(transaction)
+
     %{
       hash: unprefixed_hash(transaction.hash),
       block_hash: unprefixed_hash(transaction.block_hash),
@@ -294,7 +298,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
       receiver_address: safe_eth_to_tolar(transaction.to_address),
       new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       gas_used: transaction.gas_used,
-      excepted: safe_bool(transaction.has_error_in_internal_txs),
+      excepted: excepted,
       logs: build_logs(transaction)
     }
   end
@@ -370,4 +374,46 @@ defmodule Explorer.EthRPC.TolarHashnet do
   defp safe_bool(term) when is_boolean(term), do: term
 
   defp safe_bool(_), do: false
+
+  @errors_to_codes %{
+    "Unknown" => 1,
+    "BadRLP" => 2,
+    "InvalidFormat" => 3,
+    "OutOfGasIntrinsic" => 4,
+    "InvalidSignature" => 5,
+    "InvalidNonce" => 6,
+    "NotEnoughCash" => 7,
+    "OutOfGasBase" => 8,
+    "BlockGasLimitReached" => 9,
+    "BadInstruction" => 10,
+    "BadJumpDestination" => 11,
+    "OutOfGas" => 12,
+    "OutOfStack" => 13,
+    "StackUnderflow" => 14,
+    "RevertInstruction" => 15,
+    "InvalidZeroSignatureFormat" => 16,
+    "AddressAlreadyUsed" => 17
+  }
+
+  @spec exception(Transaction.t()) :: {boolean(), non_neg_integer()}
+  def exception(transaction) do
+    case transaction.status do
+      :error ->
+        exception = Map.get(@errors_to_codes, transaction.error, 1)
+
+        {true, exception}
+
+      _ ->
+        if safe_bool(transaction.has_error_in_internal_txs) do
+          excepted_internal_transaction =
+            Enum.find(transaction.internal_transactions, &(&1.error != "" and not is_nil(&1.error)))
+
+          {true, Map.get(@errors_to_codes, excepted_internal_transaction.error, 1)}
+        else
+          {false, 0}
+        end
+    end
+  end
+
+  def errors_to_codes, do: @errors_to_codes
 end
