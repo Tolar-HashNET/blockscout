@@ -673,6 +673,15 @@ defmodule Explorer.Factory do
     }
   end
 
+  def tolar_transaction_data_factory do
+    %Transaction.TolarTransactionData{
+      hash: transaction_hash(),
+      network_id: 1,
+      gas_refunded: nil,
+      output: data(:output)
+    }
+  end
+
   def smart_contract_factory do
     contract_code_info = contract_code_info()
 
