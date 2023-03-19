@@ -5,8 +5,10 @@ defmodule Explorer.Chain.Import.Runner.TransactionsTest do
   alias Explorer.Chain.{Address, Transaction}
   alias Explorer.Chain.Import.Runner.Transactions
 
+  alias Explorer.Chain.Transaction.TolarTransactionData
+
   describe "run/1" do
-    test "transaction's created_contract_code_indexed_at is modified on update" do
+    setup do
       %Address{hash: address_hash} = insert(:address)
 
       transaction =
@@ -30,12 +32,32 @@ defmodule Explorer.Chain.Import.Runner.TransactionsTest do
         v: transaction.v,
         value: transaction.value,
         created_contract_address_hash: address_hash,
-        created_contract_code_indexed_at: nil
+        created_contract_code_indexed_at: nil,
+        ### Tolar Hashnet fields ###
+        network_id: 1,
+        output: "0x"
       }
 
+      %{non_indexed_transaction_params: non_indexed_transaction_params, transaction: transaction}
+    end
+
+    test "transaction's created_contract_code_indexed_at is modified on update", %{
+      non_indexed_transaction_params: non_indexed_transaction_params,
+      transaction: transaction
+    } do
       assert {:ok, _} = run_transactions([non_indexed_transaction_params])
 
       assert is_nil(Repo.get(Transaction, transaction.hash).created_contract_code_indexed_at)
+    end
+
+    test "it saves tolar_transaction_data successfully", %{
+      non_indexed_transaction_params: non_indexed_transaction_params,
+      transaction: transaction
+    } do
+      assert {:ok, _} = run_transactions([non_indexed_transaction_params])
+
+      assert %TolarTransactionData{network_id: 1, output: %Explorer.Chain.Data{bytes: ""}, gas_refunded: nil} =
+               Repo.get_by(TolarTransactionData, hash: transaction.hash)
     end
   end
 

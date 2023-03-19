@@ -13,6 +13,8 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
   alias Explorer.Prometheus.Instrumenter
   alias Explorer.Utility.MissingRangesManipulator
 
+  alias Explorer.Chain.Transaction.TolarTransactionData
+
   @behaviour Import.Runner
 
   # milliseconds
@@ -64,6 +66,9 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
         :transactions
       )
     end)
+    |> Multi.run(:tolar_transaction_data, fn repo, _ ->
+      derive_tolar_transaction_data(repo, changes_list, insert_options)
+    end)
   end
 
   @impl Import.Runner
@@ -93,7 +98,11 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
     on_conflict = Map.get_lazy(options, :on_conflict, &default_on_conflict/0)
 
     # Enforce Transaction ShareLocks order (see docs: sharelocks.md)
-    ordered_changes_list = Enum.sort_by(changes_list, & &1.hash)
+    # We need to drop tolar specific fields here to allow for `insert_all`
+    ordered_changes_list =
+      changes_list
+      |> Enum.map(&Map.drop(&1, [:gas_refunded, :network_id, :output]))
+      |> Enum.sort_by(& &1.hash)
 
     Import.insert_changes_list(
       repo,
@@ -101,6 +110,31 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
       conflict_target: :hash,
       on_conflict: on_conflict,
       for: Transaction,
+      returning: true,
+      timeout: timeout,
+      timestamps: timestamps
+    )
+  end
+
+  defp derive_tolar_transaction_data(
+         repo,
+         changes_list,
+         %{
+           timeout: timeout,
+           timestamps: timestamps
+         }
+       ) do
+    # Enforce Transaction ShareLocks order (see docs: sharelocks.md)
+    ordered_tolar_transaction_changes_list =
+      changes_list
+      |> Enum.map(&Map.take(&1, TolarTransactionData.allowed_attrs()))
+      |> Enum.map(&parse_output/1)
+      |> Enum.sort_by(& &1.hash)
+
+    Import.insert_changes_list(
+      repo,
+      ordered_tolar_transaction_changes_list,
+      for: TolarTransactionData,
       returning: true,
       timeout: timeout,
       timestamps: timestamps
@@ -233,6 +267,20 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
         postgrex_error in Postgrex.Error ->
           {:error, %{exception: postgrex_error, block_hashes: block_hashes}}
       end
+    end
+  end
+
+  defp parse_output(attrs) when not is_map_key(attrs, :output), do: attrs
+
+  defp parse_output(%{output: nil} = attrs), do: attrs
+
+  defp parse_output(%{output: output} = attrs) do
+    case Explorer.Chain.Data.cast(output) do
+      {:ok, data} ->
+        Map.put(attrs, :output, data)
+
+      _ ->
+        attrs
     end
   end
 end

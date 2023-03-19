@@ -139,7 +139,7 @@ defmodule Explorer.EthRPCTest do
     test "with valid params returns valid structure", %{
       block: %Block{hash: block_hash, number: block_index} = block,
       prev_block: %Block{hash: prev_block_hash},
-      transactions: transactions,
+      transactions: transactions
     } do
       request = build_request("tol_getBlockByIndex", %{"block_index" => block_index})
 
@@ -203,7 +203,7 @@ defmodule Explorer.EthRPCTest do
     test "with valid params returns valid structure", %{
       block: %Block{hash: block_hash, number: block_index} = block,
       prev_block: %Block{hash: prev_block_hash},
-      transactions: transactions,
+      transactions: transactions
     } do
       request = build_request("tol_getLatestBlock")
 
@@ -357,10 +357,20 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "with excepted transaction returns excepted field as true", %{block: block} do
-      excepted_transaction =
-        insert(:transaction, hash: transaction_hash()) |> with_block(block, status: :error)
-      
-      internal_transaction = insert(:internal_transaction, transaction: excepted_transaction, error: "OutOfStack", index: 1, block_number: excepted_transaction.block_number, transaction_index: excepted_transaction.index, block_hash: excepted_transaction.block_hash, block_index: 1, gas_used: nil, output: nil)
+      excepted_transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block, status: :error)
+
+      internal_transaction =
+        insert(:internal_transaction,
+          transaction: excepted_transaction,
+          error: "OutOfStack",
+          index: 1,
+          block_number: excepted_transaction.block_number,
+          transaction_index: excepted_transaction.index,
+          block_hash: excepted_transaction.block_hash,
+          block_index: 1,
+          gas_used: nil,
+          output: nil
+        )
 
       transaction_hash_binary_representation = hash_to_binary(excepted_transaction.hash)
       request = build_request("tol_getTransaction", %{"transaction_hash" => transaction_hash_binary_representation})
@@ -499,7 +509,9 @@ defmodule Explorer.EthRPCTest do
 
       [_, _, third_most_recent | _] =
         l =
-        insert_list(10, :transaction, from_address: from_address) |> Enum.map(&with_block(&1, block, status: :ok)) |> Enum.reverse()
+        insert_list(10, :transaction, from_address: from_address)
+        |> Enum.map(&with_block(&1, block, status: :ok))
+        |> Enum.reverse()
 
       [%{id: 1, result: [result_first_transaction | _]}] = EthRPC.responses([request])
 
@@ -710,12 +722,26 @@ defmodule Explorer.EthRPCTest do
 
       assert {true, error_code} = TolarHashnet.exception(transaction)
 
-      assert error_code === Map.get(TolarHashnet.errors_to_codes, error)
+      assert error_code === Map.get(TolarHashnet.errors_to_codes(), error)
     end
 
     test "with transaction status :ok, but error in internal transaction return expected value" do
-      transaction = insert(:transaction, error: "OutOfStack", has_error_in_internal_txs: true) |> with_block(insert(:block, number: 1), status: :ok)
-      internal_transaction = insert(:internal_transaction, transaction: transaction, error: "OutOfStack", index: 1, block_number: transaction.block_number, transaction_index: transaction.index, block_hash: transaction.block_hash, block_index: 1, gas_used: nil, output: nil)
+      transaction =
+        insert(:transaction, error: "OutOfStack", has_error_in_internal_txs: true)
+        |> with_block(insert(:block, number: 1), status: :ok)
+
+      internal_transaction =
+        insert(:internal_transaction,
+          transaction: transaction,
+          error: "OutOfStack",
+          index: 1,
+          block_number: transaction.block_number,
+          transaction_index: transaction.index,
+          block_hash: transaction.block_hash,
+          block_index: 1,
+          gas_used: nil,
+          output: nil
+        )
 
       transaction = Explorer.Repo.preload(transaction, [:internal_transactions])
 

@@ -21,22 +21,22 @@ defmodule Explorer.Chain.Transaction.TolarTransactionData do
    * `output` - the `output` of the transaction.
   """
   @type t :: %__MODULE__{
-    hash: Hash.t(),
-    transaction: %Ecto.Association.NotLoaded{} | Transaction.t(),
-    gas_refunded: Decimal.t() | nil,
-    network_id: non_neg_integer(),
-    output: Data.t()
-  }
+          hash: Hash.t(),
+          transaction: %Ecto.Association.NotLoaded{} | Transaction.t(),
+          gas_refunded: Decimal.t() | nil,
+          network_id: non_neg_integer(),
+          output: Data.t()
+        }
 
   @primary_key false
   schema "tolar_transaction_data" do
     belongs_to(:transaction, Transaction, foreign_key: :hash, references: :hash, type: Hash.Full)
 
-    field :gas_refunded, :decimal
-    field :network_id, :integer
-    field :output, Data
+    field(:gas_refunded, :decimal)
+    field(:network_id, :integer)
+    field(:output, Data)
 
-    timestamps()
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc """
@@ -61,4 +61,6 @@ defmodule Explorer.Chain.Transaction.TolarTransactionData do
     |> validate_required(@required_attrs)
     |> assoc_constraint(:transaction)
   end
+
+  def allowed_attrs, do: @allowed_attrs
 end
