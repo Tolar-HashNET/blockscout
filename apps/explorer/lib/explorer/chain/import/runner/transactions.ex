@@ -11,8 +11,6 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
   alias Explorer.Chain.{Block, Hash, Import, Transaction}
   alias Explorer.Chain.Import.Runner.TokenTransfers
 
-  alias Explorer.Chain.Transaction.TolarTransactionData
-
   @behaviour Import.Runner
 
   # milliseconds
@@ -51,9 +49,6 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
     end)
     |> Multi.run(:transactions, fn repo, _ ->
       insert(repo, changes_list, insert_options)
-    end)
-    |> Multi.run(:tolar_transaction_data, fn repo, _ ->
-      derive_tolar_transaction_data(repo, changes_list, insert_options)
     end)
   end
 
@@ -96,31 +91,6 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
       conflict_target: :hash,
       on_conflict: on_conflict,
       for: Transaction,
-      returning: true,
-      timeout: timeout,
-      timestamps: timestamps
-    )
-  end
-
-  defp derive_tolar_transaction_data(
-         repo,
-         changes_list,
-         %{
-           timeout: timeout,
-           timestamps: timestamps
-         }
-       ) do
-    # Enforce Transaction ShareLocks order (see docs: sharelocks.md)
-    ordered_tolar_transaction_changes_list =
-      changes_list
-      |> Enum.map(&Map.take(&1, TolarTransactionData.allowed_attrs()))
-      |> Enum.map(&parse_output/1)
-      |> Enum.sort_by(& &1.hash)
-
-    Import.insert_changes_list(
-      repo,
-      ordered_tolar_transaction_changes_list,
-      for: TolarTransactionData,
       returning: true,
       timeout: timeout,
       timestamps: timestamps
@@ -251,20 +221,6 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
         postgrex_error in Postgrex.Error ->
           {:error, %{exception: postgrex_error, block_hashes: block_hashes}}
       end
-    end
-  end
-
-  defp parse_output(attrs) when not is_map_key(attrs, :output), do: attrs
-
-  defp parse_output(%{output: nil} = attrs), do: attrs
-
-  defp parse_output(%{output: output} = attrs) do
-    case Explorer.Chain.Data.cast(output) do
-      {:ok, data} ->
-        Map.put(attrs, :output, data)
-
-      _ ->
-        attrs
     end
   end
 end

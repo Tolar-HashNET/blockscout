@@ -560,8 +560,6 @@ defmodule BlockScoutWeb.API.RPC.EthControllerTest do
                |> Plug.Conn.put_req_header("content-type", "json")
                |> post("/api/eth-rpc", encoded_params)
                |> json_response(200)
-
-      IO.inspect(response)
     end
 
     test "with 0x prefix - works", %{conn: conn, api_params: api_params} do

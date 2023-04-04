@@ -694,7 +694,10 @@ defmodule EthereumJSONRPCTest do
                  "root" => nil,
                  "status" => "0x1",
                  "transactionHash" => hash,
-                 "transactionIndex" => "0x0"
+                 "transactionIndex" => "0x0",
+                 "gasRefunded" => "0x5208",
+                 "networkId" => 1,
+                 "output" => "0x"
                }
              }
            ]}

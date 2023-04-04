@@ -384,7 +384,10 @@ defmodule Indexer.Block.FetcherTest do
                      "root" => nil,
                      "status" => "0x1",
                      "transactionHash" => "0x53bd884872de3e488692881baeec262e7b95234d3965248c39fe992fffd433e5",
-                     "transactionIndex" => "0x0"
+                     "transactionIndex" => "0x0",
+                     "gasRefunded" => 0,
+                     "networkId" => 1,
+                     "output" => "0x"
                    }
                  }
                ]}

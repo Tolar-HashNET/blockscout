@@ -23,7 +23,7 @@ defmodule Explorer.Chain.Import.Runner.Transaction.TolarTransactionData do
   def ecto_schema_module, do: Transaction.TolarTransactionData
 
   @impl Import.Runner
-  def option_key, do: :tolar_transaction_data
+  def option_key, do: :transactions
 
   @impl Import.Runner
   def imported_table_row do
@@ -72,13 +72,15 @@ defmodule Explorer.Chain.Import.Runner.Transaction.TolarTransactionData do
 
   defp default_on_conflict do
     from(
-      transaction_fork in Transaction.TolarTransactionData,
+      tolar_tx_data in Transaction.TolarTransactionData,
       update: [
         set: [
-          hash: fragment("EXCLUDED.hash")
+          gas_refunded: fragment("EXCLUDED.gas_refunded"),
+          network_id: fragment("EXCLUDED.network_id"),
+          output: fragment("EXCLUDED.output")
         ]
       ],
-      where: fragment("EXCLUDED.hash <> ?", transaction_fork.hash)
+      where: fragment("EXCLUDED.hash <> ?", tolar_tx_data.hash)
     )
   end
 end

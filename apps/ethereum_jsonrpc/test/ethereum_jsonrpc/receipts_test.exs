@@ -25,7 +25,10 @@ defmodule EthereumJSONRPC.ReceiptsTest do
         status: status,
         type: type,
         transaction_hash: transaction_hash,
-        transaction_index: transaction_index
+        transaction_index: transaction_index,
+        gas_refunded: gas_refunded,
+        network_id: 1,
+        output: output
       } =
         case Keyword.fetch!(json_rpc_named_arguments, :variant) do
           EthereumJSONRPC.Geth ->
@@ -43,7 +46,10 @@ defmodule EthereumJSONRPC.ReceiptsTest do
               status: nil,
               type: nil,
               transaction_hash: "0xd3efddbbeb6ad8d8bb3f6b8c8fb6165567e9dd868013146bdbeb60953c82822a",
-              transaction_index: 17
+              transaction_index: 17,
+              gas_refunded: 0,
+              network_id: 1,
+              output: "0x"
             }
 
           EthereumJSONRPC.Parity ->
@@ -60,7 +66,10 @@ defmodule EthereumJSONRPC.ReceiptsTest do
               status: :ok,
               type: "mined",
               transaction_hash: "0x53bd884872de3e488692881baeec262e7b95234d3965248c39fe992fffd433e5",
-              transaction_index: 0
+              transaction_index: 0,
+              gas_refunded: 0,
+              network_id: 1,
+              output: "0x"
             }
         end
 
@@ -95,7 +104,10 @@ defmodule EthereumJSONRPC.ReceiptsTest do
                  ],
                  "status" => native_status,
                  "transactionHash" => transaction_hash,
-                 "transactionIndex" => integer_to_quantity(transaction_index)
+                 "transactionIndex" => integer_to_quantity(transaction_index),
+                 "gasRefunded" => integer_to_quantity(0),
+                 "networkId" => 1,
+                 "output" => "0x",
                }
              }
            ]}
@@ -122,6 +134,8 @@ defmodule EthereumJSONRPC.ReceiptsTest do
                   %{
                     cumulative_gas_used: ^cumulative_gas_used,
                     gas_used: ^gas_used,
+                    gas_refunded: ^gas_refunded,
+                    output: ^output,
                     status: ^status,
                     transaction_hash: ^transaction_hash,
                     transaction_index: ^transaction_index
