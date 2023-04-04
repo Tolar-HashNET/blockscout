@@ -65,7 +65,10 @@ defmodule EthereumJSONRPC.Receipt do
       ...>     "root" => nil,
       ...>     "status" => :ok,
       ...>     "transactionHash" => "0x3a3eb134e6792ce9403ea4188e5e79693de9e4c94e499db132be086400da79e6",
-      ...>     "transactionIndex" => 0
+      ...>     "transactionIndex" => 0,
+      ...>     "gasRefunded" => 0,
+      ...>     "networkId" => 1,
+      ...>     "output" => "0x",
       ...>   }
       ...> )
       %{
@@ -74,7 +77,10 @@ defmodule EthereumJSONRPC.Receipt do
         gas_used: 269607,
         status: :ok,
         transaction_hash: "0x3a3eb134e6792ce9403ea4188e5e79693de9e4c94e499db132be086400da79e6",
-        transaction_index: 0
+        transaction_index: 0,
+        gas_refunded: 0,
+        network_id: 1,
+        output: "0x"
       }
 
   Geth, when showing pre-[Byzantium](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-609.md) does not include
@@ -98,7 +104,10 @@ defmodule EthereumJSONRPC.Receipt do
       ...>     "root" => "0x96a8e009d2b88b1483e6941e6812e32263b05683fac202abc622a3e31aed1957",
       ...>     "to" => "0x5df9b87991262f6ba471f09758cde1c0fc1de734",
       ...>     "transactionHash" => "0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060",
-      ...>     "transactionIndex" => 0
+      ...>     "transactionIndex" => 0,
+      ...>     "gasRefunded" => 0,
+      ...>     "networkId" => 1,
+      ...>     "output" => "0x"
       ...>   }
       ...> )
       %{
@@ -107,7 +116,10 @@ defmodule EthereumJSONRPC.Receipt do
         gas_used: 21001,
         status: nil,
         transaction_hash: "0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060",
-        transaction_index: 0
+        transaction_index: 0,
+        gas_refunded: 0,
+        network_id: 1,
+        output: "0x"
       }
 
   """
@@ -117,7 +129,10 @@ defmodule EthereumJSONRPC.Receipt do
           created_contract_address_hash: String.t() | nil,
           status: status(),
           transaction_hash: String.t(),
-          transaction_index: non_neg_integer()
+          transaction_index: non_neg_integer(),
+          gas_refunded: non_neg_integer(),
+          network_id: non_neg_integer(),
+          output: String.t() | nil
         }
   def elixir_to_params(
         %{
@@ -125,7 +140,10 @@ defmodule EthereumJSONRPC.Receipt do
           "gasUsed" => gas_used,
           "contractAddress" => created_contract_address_hash,
           "transactionHash" => transaction_hash,
-          "transactionIndex" => transaction_index
+          "transactionIndex" => transaction_index,
+          "gasRefunded" => gas_refunded,
+          "networkId" => network_id,
+          "output" => output
         } = elixir
       ) do
     status = elixir_to_status(elixir)
@@ -136,7 +154,10 @@ defmodule EthereumJSONRPC.Receipt do
       created_contract_address_hash: created_contract_address_hash,
       status: status,
       transaction_hash: transaction_hash,
-      transaction_index: transaction_index
+      transaction_index: transaction_index,
+      gas_refunded: gas_refunded,
+      network_id: network_id,
+      output: output
     }
   end
 
@@ -155,7 +176,10 @@ defmodule EthereumJSONRPC.Receipt do
       ...>     "root" => nil,
       ...>     "status" => "0x1",
       ...>     "transactionHash" => "0x3a3eb134e6792ce9403ea4188e5e79693de9e4c94e499db132be086400da79e6",
-      ...>     "transactionIndex" => "0x0"
+      ...>     "transactionIndex" => "0x0",
+      ...>     "gasRefunded" => 0,
+      ...>     "networkId" => 1,
+      ...>     "output" => "0x"
       ...>   }
       ...> )
       %{
@@ -169,7 +193,10 @@ defmodule EthereumJSONRPC.Receipt do
         "root" => nil,
         "status" => :ok,
         "transactionHash" => "0x3a3eb134e6792ce9403ea4188e5e79693de9e4c94e499db132be086400da79e6",
-        "transactionIndex" => 0
+        "transactionIndex" => 0,
+        "gasRefunded" => 0,
+        "networkId" => 1,
+        "output" => "0x"
       }
 
   Receipts from Geth also supply the `EthereumJSONRPC.Transaction.t/0` `"from"` and `"to"` address hashes.
@@ -187,7 +214,10 @@ defmodule EthereumJSONRPC.Receipt do
       ...>     "root" => "0x96a8e009d2b88b1483e6941e6812e32263b05683fac202abc622a3e31aed1957",
       ...>     "to" => "0x5df9b87991262f6ba471f09758cde1c0fc1de734",
       ...>     "transactionHash" => "0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060",
-      ...>     "transactionIndex" => "0x0"
+      ...>     "transactionIndex" => "0x0",
+      ...>     "gasRefunded" => 0,
+      ...>     "networkId" => 1,
+      ...>     "output" => "0x"
       ...>   }
       ...> )
       %{
@@ -202,7 +232,10 @@ defmodule EthereumJSONRPC.Receipt do
         "root" => "0x96a8e009d2b88b1483e6941e6812e32263b05683fac202abc622a3e31aed1957",
         "to" => "0x5df9b87991262f6ba471f09758cde1c0fc1de734",
         "transactionHash" => "0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060",
-        "transactionIndex" => 0
+        "transactionIndex" => 0,
+        "gasRefunded" => 0,
+        "networkId" => 1,
+        "output" => "0x"
       }
 
   """
@@ -253,11 +286,11 @@ defmodule EthereumJSONRPC.Receipt do
   # hash format
   # gas is passed in from the `t:EthereumJSONRPC.Transaction.params/0` to allow pre-Byzantium status to be derived
   defp entry_to_elixir({key, _} = entry)
-       when key in ~w(blockHash contractAddress from gas logsBloom root to transactionHash revertReason type effectiveGasPrice),
+       when key in ~w(blockHash contractAddress from gas logsBloom root to transactionHash revertReason type effectiveGasPrice networkId output),
        do: {:ok, entry}
 
   defp entry_to_elixir({key, quantity})
-       when key in ~w(blockNumber cumulativeGasUsed gasUsed transactionIndex) do
+       when key in ~w(blockNumber cumulativeGasUsed gasUsed transactionIndex gasRefunded) do
     result =
       if is_nil(quantity) do
         nil

@@ -12,5 +12,7 @@ defmodule Explorer.Repo.Migrations.CreateTolarTransactionData do
 
       timestamps(null: false, type: :utc_datetime_usec)
     end
+
+    create unique_index(:tolar_transaction_data, :hash)
   end
 end

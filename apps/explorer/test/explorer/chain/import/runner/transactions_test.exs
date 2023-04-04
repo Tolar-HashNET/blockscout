@@ -49,16 +49,6 @@ defmodule Explorer.Chain.Import.Runner.TransactionsTest do
 
       assert is_nil(Repo.get(Transaction, transaction.hash).created_contract_code_indexed_at)
     end
-
-    test "it saves tolar_transaction_data successfully", %{
-      non_indexed_transaction_params: non_indexed_transaction_params,
-      transaction: transaction
-    } do
-      assert {:ok, _} = run_transactions([non_indexed_transaction_params])
-
-      assert %TolarTransactionData{network_id: 1, output: %Explorer.Chain.Data{bytes: ""}, gas_refunded: nil} =
-               Repo.get_by(TolarTransactionData, hash: transaction.hash)
-    end
   end
 
   defp run_transactions(changes_list) when is_list(changes_list) do

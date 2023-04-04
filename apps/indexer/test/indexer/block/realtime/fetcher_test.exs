@@ -200,7 +200,10 @@ defmodule Indexer.Block.Realtime.FetcherTest do
                  "root" => nil,
                  "status" => "0x1",
                  "transactionHash" => "0xd3937e70fab3fb2bfe8feefac36815408bf07de3b9e09fe81114b9a6b17f55c8",
-                 "transactionIndex" => "0x0"
+                 "transactionIndex" => "0x0",
+                 "gasRefunded" => "0x5208",
+                 "networkId" => 1,
+                 "output" => "0x"
                }
              }
            ]}
@@ -703,7 +706,10 @@ defmodule Indexer.Block.Realtime.FetcherTest do
                  "root" => nil,
                  "status" => "0x1",
                  "transactionHash" => "0xd3937e70fab3fb2bfe8feefac36815408bf07de3b9e09fe81114b9a6b17f55c8",
-                 "transactionIndex" => "0x0"
+                 "transactionIndex" => "0x0",
+                 "gasRefunded" => "0x5208",
+                 "networkId" => 1,
+                 "output" => "0x"
                }
              }
            ]}

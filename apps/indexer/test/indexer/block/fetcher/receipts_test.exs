@@ -60,7 +60,10 @@ defmodule Indexer.Block.Fetcher.ReceiptsTest do
                  "root" => nil,
                  "status" => "0x1",
                  "transactionHash" => "0x43bd884872de3e488692881baeec262e7b95234d3965248c39fe992fffd433e5",
-                 "transactionIndex" => "0x0"
+                 "transactionIndex" => "0x0",
+                 "gasRefunded" => "0x5208",
+                 "networkId" => 1,
+                 "output" => "0x"
                }
              },
              %{
@@ -91,7 +94,10 @@ defmodule Indexer.Block.Fetcher.ReceiptsTest do
                  "root" => nil,
                  "status" => "0x1",
                  "transactionHash" => "0x53bd884872de3e488692881baeec262e7b95234d3965248c39fe992fffd433e5",
-                 "transactionIndex" => "0x0"
+                 "transactionIndex" => "0x0",
+                 "gasRefunded" => "0x5208",
+                 "networkId" => 1,
+                 "output" => "0x"
                }
              }
            ]}

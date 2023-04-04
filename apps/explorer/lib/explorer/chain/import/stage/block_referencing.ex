@@ -13,6 +13,7 @@ defmodule Explorer.Chain.Import.Stage.BlockReferencing do
   def runners,
     do: [
       Runner.Transactions,
+      Runner.Transaction.TolarTransactionData,
       Runner.Transaction.Forks,
       Runner.Logs,
       Runner.Tokens,

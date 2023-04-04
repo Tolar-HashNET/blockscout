@@ -1821,7 +1821,10 @@ defmodule Explorer.ChainTest do
             status: :ok,
             to_address_hash: "0x8bf38d4764929064f2d4d3a56520a76ab3df415b",
             v: 0xBE,
-            value: 0
+            value: 0,
+            gas_refunded: 0,
+            network_id: 1,
+            output: "0x"
           }
         ]
       },
