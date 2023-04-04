@@ -124,7 +124,10 @@ defmodule Explorer.Chain.ImportTest do
             status: :ok,
             to_address_hash: "0x8bf38d4764929064f2d4d3a56520a76ab3df415b",
             v: 0xBE,
-            value: 0
+            value: 0,
+            gas_refunded: 0,
+            network_id: 1,
+            output: "0x"
           }
         ],
         timeout: 5
@@ -614,7 +617,10 @@ defmodule Explorer.Chain.ImportTest do
               s: 0,
               status: :ok,
               v: 0,
-              value: 0
+              value: 0,
+              gas_refunded: 0,
+              network_id: 1,
+              output: "0x"
             }
           ]
         }
@@ -705,7 +711,10 @@ defmodule Explorer.Chain.ImportTest do
               s: 0,
               status: :ok,
               v: 0,
-              value: 0
+              value: 0,
+              gas_refunded: 0,
+              network_id: 1,
+              output: "0x"
             }
           ]
         }
@@ -801,7 +810,10 @@ defmodule Explorer.Chain.ImportTest do
               s: 0,
               status: :ok,
               v: 0,
-              value: 0
+              value: 0,
+              gas_refunded: 0,
+              network_id: 1,
+              output: "0x"
             }
           ]
         },
@@ -894,7 +906,10 @@ defmodule Explorer.Chain.ImportTest do
                        standard_v: 1,
                        status: :ok,
                        v: 0xBE,
-                       value: 0
+                       value: 0,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ],
                    timeout: 5
@@ -1043,7 +1058,10 @@ defmodule Explorer.Chain.ImportTest do
                        transaction_hash: "0x1a263224a95275d77bc30a7e131bc64d948777946a790c0915ab293791fbcb61",
                        transaction_index: 0,
                        v: 158,
-                       value: 0
+                       value: 0,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      },
                      %{
                        block_hash: "0xe16d3ce09c2f5bba53bb8a78268e70692f7d3401f654038f2733948f267819bf",
@@ -1066,7 +1084,10 @@ defmodule Explorer.Chain.ImportTest do
                        transaction_hash: "0xab349efbe1ddc6d85d84a993aa52bdaadce66e8ee166dd10013ce3f2a94ca724",
                        transaction_index: 0,
                        v: 157,
-                       value: 0
+                       value: 0,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ]
                  }
@@ -1179,7 +1200,10 @@ defmodule Explorer.Chain.ImportTest do
                        r: 0,
                        s: 0,
                        v: 0,
-                       value: 0
+                       value: 0,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ]
                  },
@@ -1368,7 +1392,10 @@ defmodule Explorer.Chain.ImportTest do
                        s: 0,
                        v: 0,
                        value: 0,
-                       status: :ok
+                       status: :ok,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ]
                  }
@@ -1480,7 +1507,10 @@ defmodule Explorer.Chain.ImportTest do
                        s: 0,
                        v: 0,
                        value: 0,
-                       status: :ok
+                       status: :ok,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ]
                  }
@@ -1645,7 +1675,7 @@ defmodule Explorer.Chain.ImportTest do
                        to_address_hash: to_address_hash,
                        gas_used: 0,
                        cumulative_gas_used: 0
-                     )
+                     ) |> Map.merge(%{gas_refunded: 0, network_id: 1, output: "0x"})
                    ],
                    timeout: 1
                  },
@@ -1856,7 +1886,10 @@ defmodule Explorer.Chain.ImportTest do
                        s: 0,
                        v: 0,
                        value: 0,
-                       status: :error
+                       status: :error,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ]
                  }
@@ -1975,7 +2008,10 @@ defmodule Explorer.Chain.ImportTest do
                        s: 0,
                        v: 0,
                        value: 0,
-                       status: :error
+                       status: :error,
+                       gas_refunded: 0,
+                       network_id: 1,
+                       output: "0x"
                      }
                    ]
                  },
