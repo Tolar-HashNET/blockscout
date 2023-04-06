@@ -21,6 +21,8 @@ defmodule Explorer.EthRPCTest do
   alias Explorer.Chain.Transaction
   alias Explorer.Chain.Hash
 
+  alias Explorer.Chain.Transaction.TolarTransactionData
+
   alias Explorer.EthRPC.TolarHashnet
 
   @json_rpc_2_request %{"jsonrpc" => "2.0", "id" => 1}
@@ -257,13 +259,16 @@ defmodule Explorer.EthRPCTest do
     setup do
       block_hash = block_hash()
       block = insert(:block, hash: block_hash, consensus: true)
-      transaction = insert(:transaction, hash: transaction_hash(), index: nil) |> with_block(block, status: :ok)
+      tx_hash = transaction_hash()
+      transaction = insert(:transaction, hash: tx_hash, index: nil) |> with_block(block, status: :ok)
+      tolar_tx_data = insert(:tolar_transaction_data, hash: tx_hash)
 
-      %{block: block, transaction: transaction}
+      %{block: block, transaction: transaction, tolar_data: tolar_tx_data}
     end
 
     test "with existing transaction - return info correctly", %{
       transaction: transaction,
+      tolar_data: tolar_data,
       block: %Block{hash: block_hash} = block
     } do
       transaction_hash_binary_representation = hash_to_binary(transaction.hash)
@@ -282,6 +287,12 @@ defmodule Explorer.EthRPCTest do
         from_address: from,
         to_address: to
       } = transaction
+
+      %TolarTransactionData{
+        network_id: network_id,
+        output: output,
+        gas_refunded: gas_refunded
+      } = tolar_data
 
       confirmation_timestamp = DateTime.to_unix(block.timestamp, :millisecond)
       string_value = Decimal.to_string(value.value)
@@ -311,9 +322,9 @@ defmodule Explorer.EthRPCTest do
                    exception: 0,
                    excepted: false,
                    confirmation_timestamp: ^confirmation_timestamp,
-                   network_id: nil,
-                   output: nil,
-                   gas_refunded: nil
+                   network_id: ^network_id,
+                   output: ^output,
+                   gas_refunded: ^gas_refunded
                  }
                }
              ] = EthRPC.responses([request])
@@ -348,8 +359,10 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "with receiver address nil - returns zero address", %{block: block} do
-      no_receiver = transaction = insert(:transaction, hash: transaction_hash(), to_address: nil) |> with_block(block)
-      transaction_hash_binary_representation = hash_to_binary(no_receiver.hash)
+      tx_hash = transaction_hash()
+      no_receiver = transaction = insert(:transaction, hash: tx_hash, to_address: nil) |> with_block(block)
+      insert(:tolar_transaction_data, hash: tx_hash)
+      transaction_hash_binary_representation = hash_to_binary(tx_hash)
       request = build_request("tol_getTransaction", %{"transaction_hash" => transaction_hash_binary_representation})
       zero_address = TolarHashnet.zero_address()
 
@@ -357,7 +370,9 @@ defmodule Explorer.EthRPCTest do
     end
 
     test "with excepted transaction returns excepted field as true", %{block: block} do
-      excepted_transaction = insert(:transaction, hash: transaction_hash()) |> with_block(block, status: :error)
+      tx_hash = transaction_hash()
+      excepted_transaction = insert(:transaction, hash: tx_hash) |> with_block(block, status: :error)
+      insert(:tolar_transaction_data, hash: tx_hash)
 
       internal_transaction =
         insert(:internal_transaction,
@@ -387,15 +402,19 @@ defmodule Explorer.EthRPCTest do
       {:ok, to_address_hash} = Explorer.Chain.Hash.Address.cast("0x8880bb98e7747f73b52a9cfA34DAb9A4A06afA38")
       from_address = insert(:address, hash: from_address_hash)
 
+      tx_hash = transaction_hash()
+
       transaction =
         insert(:transaction,
-          hash: transaction_hash(),
+          hash: tx_hash,
           from_address: from_address,
           to_address: build(:address, hash: to_address_hash)
         )
         |> with_block(block, status: :ok)
 
-      %{block: block, transaction: transaction, from_address_hash: from_address_hash, from_address: from_address}
+      tolar_data = insert(:tolar_transaction_data, hash: tx_hash)
+
+      %{block: block, transaction: transaction, from_address_hash: from_address_hash, from_address: from_address, tolar_data: tolar_data}
     end
 
     test "without matched tx_hashes return an error" do
@@ -407,6 +426,7 @@ defmodule Explorer.EthRPCTest do
 
     test "without address return all transactions in database", %{
       transaction: transaction,
+      tolar_data: tolar_data,
       block: %Block{hash: block_hash} = block
     } do
       transaction_hash_binary_representation = hash_to_binary(transaction.hash)
@@ -435,6 +455,12 @@ defmodule Explorer.EthRPCTest do
       nonce = Integer.to_string(nonce)
       zero_address = TolarHashnet.zero_address()
 
+      %TolarTransactionData{
+        network_id: network_id,
+        output: output,
+        gas_refunded: gas_refunded
+      } = tolar_data
+
       assert [
                %{
                  id: 1,
@@ -455,9 +481,9 @@ defmodule Explorer.EthRPCTest do
                      exception: 0,
                      excepted: false,
                      confirmation_timestamp: ^confirmation_timestamp,
-                     network_id: nil,
-                     output: nil,
-                     gas_refunded: nil
+                     network_id: ^network_id,
+                     output: ^output,
+                     gas_refunded: ^gas_refunded
                    }
                  ]
                }
@@ -484,7 +510,13 @@ defmodule Explorer.EthRPCTest do
       params = %{"addresses" => [tolar_format_address], "limit" => limit, "skip" => 0}
 
       request = build_request("tol_getTransactionList", params)
-      insert_list(10, :transaction, from_address: from_address) |> Enum.map(&with_block(&1, block))
+      insert_list(10, :transaction, from_address: from_address)
+      |> Enum.map(fn tx ->
+        insert(:tolar_transaction_data, hash: tx.hash)
+
+        tx
+      end)
+      |> Enum.map(&with_block(&1, block))
 
       [%{id: 1, result: result}] = EthRPC.responses([request])
 
@@ -510,6 +542,11 @@ defmodule Explorer.EthRPCTest do
       [_, _, third_most_recent | _] =
         l =
         insert_list(10, :transaction, from_address: from_address)
+        |> Enum.map(fn tx ->
+          insert(:tolar_transaction_data, hash: tx.hash)
+
+          tx
+        end)
         |> Enum.map(&with_block(&1, block, status: :ok))
         |> Enum.reverse()
 
