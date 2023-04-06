@@ -34,9 +34,9 @@ defmodule Explorer.EthRPC.TolarHashnet do
            required(:excepted) => boolean(),
            required(:exception) => String.t() | nil,
            required(:new_address) => tolar_formatted_address_hash,
-           network_id: nil,
-           output: nil,
-           gas_refunded: nil
+           required(:network_id) => non_neg_integer,
+           required(:output) => unprefixed_hash,
+           required(:gas_refunded) => Gas.t() | nil
          }
 
   @typep transaction_receipt_response :: %{
@@ -144,7 +144,8 @@ defmodule Explorer.EthRPC.TolarHashnet do
   @transaction_associations %{
     from_address: :required,
     to_address: :required,
-    block: :required
+    block: :required,
+    tolar_transaction_data: :required
   }
 
   @spec tol_get_transaction_list([String.t()], non_neg_integer(), non_neg_integer()) ::
@@ -280,9 +281,9 @@ defmodule Explorer.EthRPC.TolarHashnet do
       exception: exception,
       new_address: maybe_convert_to_tolar_hash(transaction.created_contract_address_hash),
       confirmation_timestamp: DateTime.to_unix(transaction.block.timestamp, :millisecond),
-      network_id: nil,
-      output: nil,
-      gas_refunded: nil
+      network_id: transaction.tolar_transaction_data.network_id,
+      output: transaction.tolar_transaction_data.output,
+      gas_refunded: transaction.tolar_transaction_data.gas_refunded
     }
   end
 

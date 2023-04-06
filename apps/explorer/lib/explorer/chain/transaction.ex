@@ -27,7 +27,7 @@ defmodule Explorer.Chain.Transaction do
     Wei
   }
 
-  alias Explorer.Chain.Transaction.{Fork, Status}
+  alias Explorer.Chain.Transaction.{Fork, Status, TolarTransactionData}
 
   @optional_attrs ~w(max_priority_fee_per_gas max_fee_per_gas block_hash block_number created_contract_address_hash cumulative_gas_used earliest_processing_start
                      error gas_used index created_contract_code_indexed_at status to_address_hash revert_reason type has_error_in_internal_txs)a
@@ -258,6 +258,7 @@ defmodule Explorer.Chain.Transaction do
     has_many(:internal_transactions, InternalTransaction, foreign_key: :transaction_hash)
     has_many(:logs, Log, foreign_key: :transaction_hash)
     has_many(:token_transfers, TokenTransfer, foreign_key: :transaction_hash)
+    has_one(:tolar_transaction_data, TolarTransactionData, foreign_key: :hash)
 
     belongs_to(
       :to_address,
