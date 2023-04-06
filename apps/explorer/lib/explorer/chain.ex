@@ -2207,7 +2207,7 @@ defmodule Explorer.Chain do
 
   def fetch_transaction_by_hash(
         transaction_hash,
-        preloads \\ [:block, :from_address, :to_address, :internal_transactions]
+        preloads \\ [:block, :from_address, :to_address, :internal_transactions, :tolar_transaction_data]
       ) do
     Transaction
     |> where([t], t.hash == ^transaction_hash)
