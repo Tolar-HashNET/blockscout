@@ -1,9 +1,11 @@
 alias Explorer.Chain
 alias Explorer.Chain.{Address, Block, Data, Hash, Transaction}
 
+alias Explorer.EthRPC.TolarHashnet
+
 defimpl Phoenix.HTML.Safe, for: Address do
   def to_iodata(%@for{} = address) do
-    @for.checksum(address, true)
+    TolarHashnet.eth_address_to_tolar(address.hash)
   end
 end
 

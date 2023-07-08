@@ -5,7 +5,9 @@ defmodule BlockScoutWeb.ChainPage do
 
   import Wallaby.Query, only: [css: 1, css: 2]
 
-  alias Explorer.Chain.{Address, Block, Transaction}
+  alias Explorer.Chain.{Block, Transaction}
+
+  alias Explorer.EthRPC.TolarHashnet
 
   def block(%Block{number: block_number}) do
     css("[data-block-number='#{block_number}']")
@@ -16,7 +18,7 @@ defmodule BlockScoutWeb.ChainPage do
   end
 
   def contract_creation(%Transaction{created_contract_address_hash: hash}) do
-    checksum = Address.checksum(hash)
+    checksum = TolarHashnet.eth_address_to_tolar(hash)
     css("[data-test='contract-creation'] [data-address-hash='#{checksum}']")
   end
 
