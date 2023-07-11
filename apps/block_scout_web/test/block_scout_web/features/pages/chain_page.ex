@@ -33,11 +33,11 @@ defmodule BlockScoutWeb.ChainPage do
   end
 
   def token_transfers(%Transaction{hash: transaction_hash}, count: count) do
-    css("[data-identifier-hash='#{transaction_hash}'] [data-test='token_transfer']", count: count)
+    css("[data-identifier-hash='#{unprefixed_tx_hash(transaction_hash)}'] [data-test='token_transfer']", count: count)
   end
 
   def token_transfers_expansion(%Transaction{hash: transaction_hash}) do
-    css("[data-identifier-hash='#{transaction_hash}'] [data-test='token_transfers_expansion']")
+    css("[data-identifier-hash='#{unprefixed_tx_hash(transaction_hash)}'] [data-test='token_transfers_expansion']")
   end
 
   def transactions(count: count) do
@@ -46,5 +46,9 @@ defmodule BlockScoutWeb.ChainPage do
 
   def visit_page(session) do
     visit(session, "/")
+  end
+
+  defp unprefixed_tx_hash(hash) do
+    TolarHashnet.unprefixed_hash(hash)
   end
 end
