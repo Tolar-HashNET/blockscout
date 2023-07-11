@@ -5,14 +5,18 @@ defmodule BlockScoutWeb.TransactionPage do
 
   import Wallaby.Query, only: [css: 1, css: 2]
 
-  alias Explorer.Chain.{Transaction, Hash}
+  alias Explorer.Chain.Transaction
+
+  alias Explorer.EthRPC.TolarHashnet
 
   def click_logs(session) do
     click(session, css("[data-test='transaction_logs_link']"))
   end
 
   def detail_hash(%Transaction{hash: transaction_hash}) do
-    css("[data-test='transaction_detail_hash']", text: Hash.to_string(transaction_hash))
+    text = TolarHashnet.unprefixed_hash(transaction_hash)
+
+    css("[data-test='transaction_detail_hash']", text: text)
   end
 
   def is_pending() do
