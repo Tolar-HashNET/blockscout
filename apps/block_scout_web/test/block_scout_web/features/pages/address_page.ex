@@ -5,6 +5,8 @@ defmodule BlockScoutWeb.AddressPage do
   import Wallaby.Query, only: [css: 1, css: 2]
   alias Explorer.Chain.{Address, InternalTransaction, Hash, Transaction, Token}
 
+  alias Explorer.EthRPC.TolarHashnet
+
   def apply_filter(session, direction) do
     session
     |> click(css("[data-test='filter_dropdown']", text: "Filter: All"))
@@ -32,7 +34,9 @@ defmodule BlockScoutWeb.AddressPage do
   end
 
   def address(%Address{} = address) do
-    css("[data-address-hash='#{address}']", text: to_string(address))
+    address = TolarHashnet.eth_address_to_tolar(address.hash)
+
+    css("[data-address-hash='#{address}']", text: address)
   end
 
   def contract_creator do
@@ -80,6 +84,8 @@ defmodule BlockScoutWeb.AddressPage do
   end
 
   def detail_hash(address) do
+    address = TolarHashnet.eth_address_to_tolar(address.hash)
+
     css("[data-test='address_detail_hash']", text: to_string(address))
   end
 
@@ -99,10 +105,10 @@ defmodule BlockScoutWeb.AddressPage do
         %InternalTransaction{transaction_hash: transaction_hash, index: index, from_address_hash: address_hash},
         :from
       ) do
-    checksum = Address.checksum(address_hash)
+    checksum = TolarHashnet.eth_address_to_tolar(address_hash)
 
     css(
-      "[data-internal-transaction-transaction-hash='#{transaction_hash}'][data-internal-transaction-index='#{index}']" <>
+      "[data-internal-transaction-transaction-hash='#{unprefixed_tx_hash(transaction_hash)}'][data-internal-transaction-index='#{index}']" <>
         " [data-test='address_hash_link']" <> " [data-address-hash='#{checksum}']"
     )
   end
@@ -112,7 +118,7 @@ defmodule BlockScoutWeb.AddressPage do
         :to
       ) do
     css(
-      "[data-internal-transaction-transaction-hash='#{transaction_hash}'][data-internal-transaction-index='#{index}']" <>
+      "[data-internal-transaction-transaction-hash='#{unprefixed_tx_hash(transaction_hash)}'][data-internal-transaction-index='#{index}']" <>
         " [data-test='address_hash_link']" <> " [data-address-hash='#{address_hash}']"
     )
   end
@@ -127,7 +133,7 @@ defmodule BlockScoutWeb.AddressPage do
 
   def transaction(%Hash{} = hash) do
     hash
-    |> to_string()
+    |> TolarHashnet.unprefixed_hash()
     |> transaction()
   end
 
@@ -136,34 +142,36 @@ defmodule BlockScoutWeb.AddressPage do
   end
 
   def transaction_address_link(%Transaction{hash: hash, from_address_hash: address_hash}, :from) do
-    checksum = Address.checksum(address_hash)
+    checksum = TolarHashnet.eth_address_to_tolar(address_hash)
 
     css("[data-identifier-hash='#{hash}'] [data-test='address_hash_link'] [data-address-hash='#{checksum}']")
   end
 
   def transaction_address_link(%Transaction{hash: hash, to_address_hash: address_hash}, :to) do
-    checksum = Address.checksum(address_hash)
+    checksum = TolarHashnet.eth_address_to_tolar(address_hash)
 
     css("[data-identifier-hash='#{hash}'] [data-test='address_hash_link'] [data-address-hash='#{checksum}']")
   end
 
   def transaction_status(%Transaction{hash: transaction_hash}) do
-    css("[data-identifier-hash='#{transaction_hash}'] [data-test='transaction_status']")
+    css("[data-identifier-hash='#{unprefixed_tx_hash(transaction_hash)}'] [data-test='transaction_status']")
   end
 
   def token_transfer(%Transaction{hash: transaction_hash}, %Address{} = address, count: count) do
+    address = TolarHashnet.eth_address_to_tolar(address.hash)
+
     css(
-      "[data-identifier-hash='#{transaction_hash}'] [data-test='token_transfer'] [data-address-hash='#{address}']",
+      "[data-identifier-hash='#{unprefixed_tx_hash(transaction_hash)}'] [data-test='token_transfer'] [data-address-hash='#{address}']",
       count: count
     )
   end
 
   def token_transfers(%Transaction{hash: transaction_hash}, count: count) do
-    css("[data-identifier-hash='#{transaction_hash}'] [data-test='token_transfer']", count: count)
+    css("[data-identifier-hash='#{unprefixed_tx_hash(transaction_hash)}'] [data-test='token_transfer']", count: count)
   end
 
   def token_transfers_expansion(%Transaction{hash: transaction_hash}) do
-    css("[data-identifier-hash='#{transaction_hash}'] [data-test='token_transfers_expansion']")
+    css("[data-identifier-hash='#{unprefixed_tx_hash(transaction_hash)}'] [data-test='token_transfers_expansion']")
   end
 
   def visit_page(session, %Address{hash: address_hash}), do: visit_page(session, address_hash)
@@ -174,5 +182,9 @@ defmodule BlockScoutWeb.AddressPage do
 
   def visit_page(session) do
     visit(session, "/accounts")
+  end
+
+  defp unprefixed_tx_hash(hash) do
+    TolarHashnet.unprefixed_hash(hash)
   end
 end
