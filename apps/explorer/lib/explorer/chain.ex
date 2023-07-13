@@ -668,6 +668,12 @@ defmodule Explorer.Chain do
     |> Enum.take(paging_options.page_size)
   end
 
+  defp filter_topic(base_query, nil), do: base_query
+
+  defp filter_topic(base_query, ""), do: base_query
+
+  defp filter_topic(base_query, topic)
+
   @spec tol_address_to_logs(Hash.Address.t(), Keyword.t()) :: [Log.t()]
   def tol_address_to_logs(address_hash, options \\ []) when is_list(options) do
     paging_options = Keyword.get(options, :paging_options) || %PagingOptions{page_size: 50}
@@ -697,12 +703,6 @@ defmodule Explorer.Chain do
     |> filter_topic(options)
     |> Repo.all()
   end
-
-  defp filter_topic(base_query, nil), do: base_query
-
-  defp filter_topic(base_query, ""), do: base_query
-
-  defp filter_topic(base_query, topic)
 
   defp filter_topic(base_query, topic: topic) do
     from(log in base_query,

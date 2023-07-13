@@ -3,12 +3,6 @@ defmodule Explorer.Chain.Cache.Block do
   Cache for block count.
   """
 
-  import Ecto.Query,
-    only: [
-      from: 2
-    ]
-  @default_cache_period :timer.hours(2)
-
   use Explorer.Chain.MapCache,
     name: :block_count,
     key: :count,
@@ -19,8 +13,7 @@ defmodule Explorer.Chain.Cache.Block do
 
   require Logger
 
-  alias Explorer.{Chain, Repo}
-  alias Explorer.Chain.Block
+  alias Explorer.Chain
   alias Explorer.Chain.Cache.Helper
 
   @cache_key "block_count"
@@ -95,25 +88,4 @@ defmodule Explorer.Chain.Cache.Block do
   defp async_task_on_deletion({:delete, _, :count}), do: get_async_task()
 
   defp async_task_on_deletion(_data), do: nil
-
-  @spec fetch_count_consensus_block() :: non_neg_integer
-  defp fetch_count_consensus_block do
-    query =
-      from(block in Block,
-        select: count(block.hash),
-        where: block.consensus == true
-      )
-
-    Repo.one!(query, timeout: :infinity) || 0
-  end
-
-  defp cache_period do
-    "CACHE_BLOCK_COUNT_PERIOD"
-    |> System.get_env("")
-    |> Integer.parse()
-    |> case do
-      {integer, ""} -> :timer.seconds(integer)
-      _ -> @default_cache_period
-    end
-  end
 end
