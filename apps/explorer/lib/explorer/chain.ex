@@ -702,7 +702,7 @@ defmodule Explorer.Chain do
 
   defp filter_topic(base_query, ""), do: base_query
 
-  defp filter_topic(base_query, topic) do
+  defp filter_topic(base_query, topic)
 
   defp filter_topic(base_query, topic: topic) do
     from(log in base_query,

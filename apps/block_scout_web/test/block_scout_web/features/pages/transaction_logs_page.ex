@@ -18,6 +18,8 @@ defmodule BlockScoutWeb.TransactionLogsPage do
   end
 
   def click_address(session, address) do
+    address = Explorer.EthRPC.TolarHashnet.eth_address_to_tolar(address.hash)
+
     click(session, css("[data-test='log_address_link'][data-address-hash='#{address}']"))
   end
 end
