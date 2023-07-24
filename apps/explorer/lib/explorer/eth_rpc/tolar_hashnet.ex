@@ -145,7 +145,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
     from_address: :required,
     to_address: :required,
     block: :required,
-    tolar_transaction_data: :required
+    tolar_transaction_data: :optional
   }
 
   @spec tol_get_transaction_list([String.t()], non_neg_integer(), non_neg_integer()) ::
