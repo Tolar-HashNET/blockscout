@@ -7,7 +7,7 @@ defmodule Explorer.Chain.Transaction.TolarTransactionData do
 
   alias TolarTransactionData
 
-  alias Explorer.Chain.{Data, Transaction, Hash}
+  alias Explorer.Chain.{Data, Hash, Transaction}
 
   @optional_attrs ~w(gas_refunded)a
   @required_attrs ~w(network_id output hash)a

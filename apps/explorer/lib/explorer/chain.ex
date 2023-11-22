@@ -668,11 +668,19 @@ defmodule Explorer.Chain do
     |> Enum.take(paging_options.page_size)
   end
 
+  defp filter_topic(base_query, topic)
+
   defp filter_topic(base_query, nil), do: base_query
 
   defp filter_topic(base_query, ""), do: base_query
 
-  defp filter_topic(base_query, topic)
+  defp filter_topic(base_query, topic: topic) do
+    from(log in base_query,
+      where:
+        log.first_topic == ^topic or log.second_topic == ^topic or log.third_topic == ^topic or
+          log.fourth_topic == ^topic
+    )
+  end
 
   @spec tol_address_to_logs(Hash.Address.t(), Keyword.t()) :: [Log.t()]
   def tol_address_to_logs(address_hash, options \\ []) when is_list(options) do
@@ -692,8 +700,8 @@ defmodule Explorer.Chain do
       from(
         log in subquery(base_query),
         inner_join: transaction in Transaction,
+        on: transaction.hash == log.transaction_hash,
         where:
-          log.block_hash == transaction.block_hash and
             log.block_number == transaction.block_number and
             log.transaction_hash == transaction.hash,
         select: log
@@ -702,14 +710,6 @@ defmodule Explorer.Chain do
     wrapped_query
     |> filter_topic(options)
     |> Repo.all()
-  end
-
-  defp filter_topic(base_query, topic: topic) do
-    from(log in base_query,
-      where:
-        log.first_topic == ^topic or log.second_topic == ^topic or log.third_topic == ^topic or
-          log.fourth_topic == ^topic
-    )
   end
 
   def where_block_number_in_period(base_query, from_block, to_block) when is_nil(from_block) and not is_nil(to_block) do
@@ -2391,7 +2391,7 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
-  def fetch_latest_block() do
+  def fetch_latest_block do
     Block
     |> preload([:transactions])
     |> order_by([block], desc: block.number)
@@ -2399,7 +2399,7 @@ defmodule Explorer.Chain do
     |> Repo.one()
   end
 
-  def fetch_latest_block_hash() do
+  def fetch_latest_block_hash do
     Block
     |> select([block], block.hash)
     |> where([block], block.consensus == true)

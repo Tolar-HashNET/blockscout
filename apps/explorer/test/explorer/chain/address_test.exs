@@ -60,5 +60,15 @@ defmodule Explorer.Chain.AddressTest do
       assert str("0xdbf03b407c01e7cd3cbea99509d93f8dddc8c6fb") == "0xDBF03B407c01E7CD3cBea99509D93F8Dddc8C6FB"
       assert str("0xd1220a0cf47c7b9be7a2e6ba89f429762e7b9adb") == "0xD1220A0Cf47c7B9BE7a2e6ba89F429762E7B9adB"
     end
+
+    test "returns the checksum tol formatted address" do
+      expect(EthereumJSONRPC.Mox, :json_rpc, fn _json, _options ->
+        {:ok, "30"}
+      end)
+
+      Application.put_env(:explorer, :checksum_function, :tol)
+
+      assert str("0x93B8597964A2A7F0C93C49F9E4C4A170E0C42A5E") == "5493b8597964a2a7f0c93c49f9e4c4a170e0c42a5eb3beda0d"
+    end
   end
 end
