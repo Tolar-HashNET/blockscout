@@ -3728,6 +3728,10 @@ defmodule Explorer.Chain do
 
   """
   @spec string_to_address_hash(String.t()) :: {:ok, Hash.Address.t()} | :error
+  def string_to_address_hash("54" <> <<address::binary-size(40), _checksum::binary>>) do
+    Hash.Address.cast("0x" <> address)
+  end
+
   def string_to_address_hash(string) when is_binary(string) do
     Hash.Address.cast(string)
   end
@@ -3782,6 +3786,10 @@ defmodule Explorer.Chain do
 
   """
   @spec string_to_transaction_hash(String.t()) :: {:ok, Hash.t()} | :error
+  def string_to_transaction_hash("54" <> <<string::binary-size(40), _checksum::binary>>) do
+    Hash.Full.cast("0x" <> string)
+  end
+
   def string_to_transaction_hash(string) when is_binary(string) do
     Hash.Full.cast(string)
   end
