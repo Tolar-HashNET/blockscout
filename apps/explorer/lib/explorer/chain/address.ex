@@ -155,16 +155,20 @@ defmodule Explorer.Chain.Address do
   end
 
   def checksum(hash, iodata?) do
+    checksum_fun = Application.get_env(:explorer, :checksum_function) || :eth
+    prefix = if checksum_fun == :tol, do: "54", else: "0x"
+
     checksum_formatted =
-      case Application.get_env(:explorer, :checksum_function) || :eth do
+      case checksum_fun do
         :eth -> eth_checksum(hash)
         :rsk -> rsk_checksum(hash)
+        :tol -> tol_checksum(hash)
       end
 
     if iodata? do
-      ["0x" | checksum_formatted]
+      [prefix | checksum_formatted]
     else
-      to_string(["0x" | checksum_formatted])
+      to_string([prefix | checksum_formatted])
     end
   end
 
@@ -217,6 +221,18 @@ defmodule Explorer.Chain.Address do
       {alpha, _} ->
         alpha
     end)
+  end
+
+  def tol_checksum(hash) do
+    address = hash |> to_string() |> String.trim_leading("0x")
+
+    <<_b::binary-size(56), checksum::binary>> =
+      hash.bytes
+      |> ExKeccak.hash_256()
+      |> ExKeccak.hash_256()
+      |> Base.encode16(case: :lower)
+
+    address <> checksum
   end
 
   defp stream_every_four_bytes_of_sha256(value) do

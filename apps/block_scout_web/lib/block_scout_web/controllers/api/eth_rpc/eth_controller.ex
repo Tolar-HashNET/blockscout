@@ -4,6 +4,7 @@ defmodule BlockScoutWeb.API.EthRPC.EthController do
   alias BlockScoutWeb.AccessHelper
   alias BlockScoutWeb.API.EthRPC.View, as: EthRPCView
   alias Explorer.EthRPC
+  alias Plug.Conn
 
   def eth_request(%{body_params: %{"_json" => requests}} = conn, _) when is_list(requests) do
     case AccessHelper.check_rate_limit(conn) do
@@ -63,7 +64,7 @@ defmodule BlockScoutWeb.API.EthRPC.EthController do
   end
 
   defp try_to_parse_as_normal_request(conn, request) do
-    with {:ok, %{"method" => "tol_" <> _} = body, _} <- Plug.Conn.read_body(conn),
+    with {:ok, %{"method" => "tol_" <> _} = body, _} <- Conn.read_body(conn),
          {:ok, decoded_request} <- Jason.decode(body) do
       decoded_request
     else

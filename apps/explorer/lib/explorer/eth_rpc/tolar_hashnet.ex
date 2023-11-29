@@ -3,7 +3,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   JsonRPC methods handling for Tolar hashnet
   """
   alias Explorer.Chain
-  alias Explorer.Chain.{Address, Block, Data, Hash, Transaction, Gas}
+  alias Explorer.Chain.{Address, Block, Data, Gas, Hash, Transaction}
 
   @typep tolar_formatted_address_hash :: String.t()
   @typep unprefixed_hash :: String.t()
@@ -97,7 +97,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   end
 
   @spec tol_get_latest_block() :: {:ok, tol_block_response()} | {:error, error()}
-  def tol_get_latest_block() do
+  def tol_get_latest_block do
     case Chain.fetch_latest_block() do
       %Block{} = block ->
         {:ok, build_block_response(block)}
@@ -108,7 +108,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   end
 
   @spec tol_get_block_count() :: {:ok, integer()}
-  def tol_get_block_count(), do: {:ok, Chain.block_count()}
+  def tol_get_block_count, do: {:ok, Chain.block_count()}
 
   @spec tol_get_transaction(String.t()) :: {:ok, transaction_response()} | {:error, error()}
   def tol_get_transaction(transaction_hash) do
@@ -199,7 +199,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
              total_blocks_count: non_neg_integer(),
              last_confirmed_block_hash: Hash.Address.t()
            }}
-  def tol_get_blockchain_info() do
+  def tol_get_blockchain_info do
     {:ok, blockchain_info()}
   end
 
@@ -337,9 +337,9 @@ defmodule Explorer.EthRPC.TolarHashnet do
 
   @zero_address "54000000000000000000000000000000000000000023199e2b"
 
-  def zero_address(), do: @zero_address
+  def zero_address, do: @zero_address
 
-  defp blockchain_info() do
+  defp blockchain_info do
     %{
       confirmed_blocks_count: Chain.fetch_count_consensus_blocks(),
       total_blocks_count: Chain.block_count(),
@@ -367,7 +367,7 @@ defmodule Explorer.EthRPC.TolarHashnet do
   defp unprefixed_binary("0x" <> unprefixed), do: unprefixed
 
   defp unprefixed_data(%Data{} = data) do
-    [_, unprefixed] = Explorer.Chain.Data.to_iodata(data)
+    [_, unprefixed] = Data.to_iodata(data)
 
     IO.iodata_to_binary(unprefixed)
   end
